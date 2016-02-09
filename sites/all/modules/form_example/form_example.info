@@ -1,0 +1,5 @@
+core = "6.x"
+description = "a form test"
+name = "form test example"
+package = Administration
+

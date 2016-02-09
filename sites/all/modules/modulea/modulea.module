@@ -1,0 +1,7 @@
+<?php
+function modulea_helloworld()
+{
+    return array("A"=>"one", "B"=>"two", "C"=>"three","function"=>__FUNCTION__);
+}
+
+

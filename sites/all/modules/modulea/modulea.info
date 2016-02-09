@@ -1,0 +1,11 @@
+
+name = module A
+description = a test module A
+
+package = Raymond
+version=VERSION
+core = 6.x
+
+files[] = modulea.module
+
+

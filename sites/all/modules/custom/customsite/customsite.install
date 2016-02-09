@@ -1,0 +1,20 @@
+<?php
+// $Id: customsite.install
+
+/**
+ * Implementation of hook_install()
+ */
+function customsite_install() {
+  // Set the module weight so it can override other modules.
+  db_query("UPDATE {system} SET weight = 99 WHERE name = 'customsite'");
+}
+
+/**
+ * Implementation of hook_uninstall()
+ */
+function customsite_uninstall() {
+  // Remove variables which is defined in our module
+  variable_del('customsite_setting1');
+  variable_del('customsite_setting2');
+}
+

@@ -1,0 +1,11 @@
+name = Search
+description = Enables site-wide keyword searching.
+package = Core - optional
+version = VERSION
+core = 6.x
+
+; Information added by Drupal.org packaging script on 2015-12-03
+version = "6.37+16-dev"
+project = "drupal"
+datestamp = "1449182104"
+

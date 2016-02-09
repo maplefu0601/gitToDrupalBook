@@ -1,0 +1,5 @@
+; $Id$
+name = Custom Site functions
+description = Custom functions for this site.
+core = 6.x
+

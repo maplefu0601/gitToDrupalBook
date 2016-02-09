@@ -1,0 +1,11 @@
+name = OpenID
+description = "Allows users to log into your site using OpenID."
+version = VERSION
+package = Core - optional
+core = 6.x
+
+; Information added by Drupal.org packaging script on 2015-12-03
+version = "6.37+16-dev"
+project = "drupal"
+datestamp = "1449182104"
+
