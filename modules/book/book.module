@@ -689,6 +689,7 @@ function book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       break;
     case 'insert':
     case 'update':
+	dsm($node, 'book module');
       if (!empty($node->book['bid'])) {
         if ($node->book['bid'] == 'new') {
           // New nodes that are their own book.

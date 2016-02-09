@@ -1,0 +1,9 @@
+
+name = mkdoc_book
+desciption = a module for creating mkdocs book
+
+package = gdc
+version = VERSION
+core = 6.x
+
+

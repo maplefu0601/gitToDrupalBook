@@ -1,0 +1,30 @@
+
+<?php
+
+function mkdoc_book_menu()
+{
+$items['mkdoc_book/new'] = array(
+		     'title' => 'gdc book',
+			 'page callback' => 'mkdoc_book_new',
+			 'access arguments' => array(true),
+			 'type' => MENU_CALLBACK
+			 );
+
+	return $items;
+
+}
+
+function mkdoc_book_new() {
+	//pass the location of the json file, $_POST will have the value
+	//read the json file http://php.net/manual/en/function.json-decode.php
+	dsm($_SERVER);
+	dsm($_POST);
+
+    //create a book node
+	
+    //foreach page
+		//create a page node
+	return "Im here";	
+
+}
+
