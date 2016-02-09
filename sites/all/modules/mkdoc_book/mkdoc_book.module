@@ -3,10 +3,12 @@
 
 function mkdoc_book_menu()
 {
-$items['mkdoc_book/new'] = array(
+	$items = array();
+	$items['mkdoc_book/new'] = array(
 		     'title' => 'gdc book',
 			 'page callback' => 'mkdoc_book_new',
 			 'access arguments' => array(true),
+			 'access callback' => TRUE,
 			 'type' => MENU_CALLBACK
 			 );
 
@@ -19,12 +21,49 @@ function mkdoc_book_new() {
 	//read the json file http://php.net/manual/en/function.json-decode.php
 	dsm($_SERVER);
 	dsm($_POST);
+	var_dump($_POST);
 
     //create a book node
+	createNewPage($_POST['name']);
 	
     //foreach page
 		//create a page node
-	return "Im here";	
+	return "Im here----".$_POST['name'];	
 
 }
+
+function createNewPage($name) {
+	$file = file_get_contents($name);
+	var_dump($file);
+	$data = json_decode($file, true);
+	var_dump($data['site_name']);
+
+	createPageNode($data);
+}
+
+function createPageNode($data) {
+	
+	$node = new stdClass();
+	$node->book = array('bid'=>'new');
+	
+	$node->name = "$data['site_name']"; 
+	$node->title = $node->name; 
+	$node->body = json_encode($data['pages']); 
+	$node->type = 'book';
+	$node->created = time(); 
+	$node->changed = $node->created; 
+	$node->promote = 0; 
+	$node->sticky = 0; 
+	$node->format = 2;
+	$node->status = 1;
+	$node->language = 'en';
+
+	node_save($node);
+
+}
+
+function createNewNode() {
+	
+}
+
 
