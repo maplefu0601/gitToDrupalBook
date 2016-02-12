@@ -79,6 +79,58 @@ class MkDoc
 	public function getPageByLinkName($name) {
 		return $this->pagesByLinkName[$name];	
 	}
+
+	public function getMkdocsFromDb($bookId) {
+		$tableName = 'mkdocids';
+		if(db_table_exists($tableName)) {
+			$query = 'select doc from '.$table.' where bookid= '.$bookId;
+			$ret = db_query($query);
+
+			if(count($ret) > 0) {
+				$data = db_fetch_array($ret);
+
+				if($data != FALSE) {
+					return $data['doc'];	
+				}
+			}
+		}
+	}
+
+	public function setMkdocsToDb($bookId, $value) {
+		$tableName = 'mkdocids';
+		if(!db_table_exists($tableName)) {
+			$this->createMkdocTable($tableName);
+		}
+
+		$data = array($bookId => serialize($value));
+		drupal_write_record($tableName, $data);
+	}
+
+	public function getNodeIdsFromDb($bookId) {
+		
+	}
+
+	public function setNodeIdsToDb($bookId, $value) {
+		
+	}
+
+	private function createMkdocTable($tableName) {
+var_dump('------createMkdocTable('.$tableName.')');
+
+		$schema[$table] = array(
+			'fields' => array(
+				'bookid' => array('type' => 'int', 'not null' => TRUE),
+				'doc' => array('type' => 'varchar'),
+			),
+//			'primary key' => array('bookid'),
+		);
+$statements = db_create_table_sql($tableName, $schema[$table]);
+var_dump( $statements);
+echo '<==========>';
+//db_create_table($ret, $tableName, $schema[$table]);	
+//var_dump($ret);
+
+	}
 }
 
 function createNewBook($name) {
@@ -127,21 +179,27 @@ function createNewPageEx($bookNodeId, $yamlPageContent) {
 
 	parseObject($bookNodeId, $yamlObj, NULL);
 
+	$mkdoc = MkDoc::getInstance();
+	$mkdoc->setMkdocsToDb($bookNodeId,$mkdoc);
+	//var_dump($mkdoc);
+	echo '*********after parseObject';
+	//var_dump($mkdoc->getMkdocsFromDb($bookNodeId));
+
 	//var_dump(MkDoc::getInstance()->getNodeIds());
 	//var_dump(MkDoc::getInstance()->getLinkNames());
 }
 
 function parseObject($bookNodeId, $obj, $parentId) {
-	echo "=================";
+	//echo "=================";
 	
 	$mkdoc = MkDoc::getInstance();
 	foreach($obj as $chapter => $chapterValue) {
 
-		var_dump($chapter);
+//var_dump($chapter);
 		//echo "***********";
 		//var_dump($chapterValue);
 
-echo "----------------CHAPTER-------------------".is_array($chapterValue).'======';
+//echo "----------------CHAPTER-------------------".is_array($chapterValue).'======';
 		if(is_array($chapterValue)) {
 			$saveObj = new stdClass();
 			$saveObj->parentId = $parentId;
@@ -177,7 +235,7 @@ echo "----------------CHAPTER-------------------".is_array($chapterValue).'=====
 
 					if(isMdLink($val)) {
 						$folder = $GLOBALS["dataFolder"].$val;
-						echo "*************md link********".$folder;
+//						echo "*************md link********".$folder;
 						$nodeId = createPageNode($bookNodeId, $parentId, $key, $val, $folder);	
 
 					} else {
@@ -205,9 +263,9 @@ function getNodeId($matches) {
    //echo '=================';
    $matches[0] = str_replace('\\', '', $matches[0]);
    $matches[1] = str_replace('\\', '', $matches[1]);
-   var_dump($matches);
+//   var_dump($matches);
 	$folder = $GLOBALS["dataFolder"].$matches[1];
-	print( $folder);
+//	print( $folder);
 
 	$nid = createPageNode($GLOBALS['bookNodeId'], $matches[1], $folder);
 	$matches[0] = "node/".$nid;
@@ -298,10 +356,10 @@ function createPageNode($bookId, $parentId, $title, $fileName, $fileNameWithFold
 
 	echo $fileName;
 	$filemd = file_get_contents($fileNameWithFolder);
-	echo "================";
+//	echo "================";
 	echo ('parentId:'.$parentId);
 	//var_dump(node_load($bookId));
-	echo "================";
+//	echo "================";
 	//var_dump(node_load($parentId));
 
 	if($bookId === NULL) {

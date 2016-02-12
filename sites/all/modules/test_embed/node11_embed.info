@@ -1,0 +1,7 @@
+name = "Node2345 Embed"
+description = "Module providing an embed node widget"
+package = "Other"
+core = 6.x
+
+
+

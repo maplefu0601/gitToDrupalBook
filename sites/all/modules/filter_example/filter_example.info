@@ -1,0 +1,6 @@
+name = filter example
+description = a filter example
+package = Other
+core = 6.x
+
+
