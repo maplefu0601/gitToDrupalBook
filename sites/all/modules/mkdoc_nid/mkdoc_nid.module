@@ -31,8 +31,8 @@ function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
 			$linkNames = $GLOBALS['mkdocLinkNames-'.$bookId];	
 		}
 
-		$nid = mkdoc_nid_getNodeId($matches[0]);
-dsm($matches[0].'----'.$nid);
+		$nid = mkdoc_nid_getNodeId($matches[1]);
+dsm($matches[1].'----'.$nid);
 		$output = '<a href="'.$nid.'">'.$matches[0].'</a>';
 
 		return $output;
@@ -101,9 +101,10 @@ dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 			$GLOBALS['mkdocLinkNames-'.$bookId] = $linkNames;
 			$GLOBALS['mkdocNodeIds-'.$bookId] = $nodeIds;
 
-			dsm($linkNames);
+			dsm($linkNames[$mdName]);
+			dsm($linkNames[$mdName]->nodeId);
 
-			return $linkNames[$mdName];
+			return $linkNames[$mdName]->nodeId;
 		}
 	}
 	
