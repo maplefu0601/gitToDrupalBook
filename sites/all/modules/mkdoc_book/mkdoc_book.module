@@ -41,8 +41,8 @@ class MkDoc
 {
 	public $siteName;
 	public $bookId;
-	private $pagesByNodeId = array();
-	private $pagesByLinkName = array();
+	public $pagesByNodeId = array();
+	public $pagesByLinkName = array();
 
 	private static $instance = NULL;
 
@@ -83,14 +83,14 @@ class MkDoc
 	public function getMkdocsFromDb($bookId) {
 		$tableName = 'mkdocids';
 		if(db_table_exists($tableName)) {
-			$query = 'select doc from '.$table.' where bookid= '.$bookId;
-			$ret = db_query($query);
+			$query = "select doc from {$tableName} where bookid=%d";
+			$ret = db_query($query, $bookId);
 
 			if(count($ret) > 0) {
 				$data = db_fetch_array($ret);
 
 				if($data != FALSE) {
-					return $data['doc'];	
+					return unserialize($data['doc']);	
 				}
 			}
 		}
@@ -102,8 +102,13 @@ class MkDoc
 			$this->createMkdocTable($tableName);
 		}
 
-		$data = array($bookId => serialize($value));
-		drupal_write_record($tableName, $data);
+		$data = serialize(array($bookId => ($value)));
+		var_dump($data);
+		$query = "insert into {$tableName} values(%d, '%s')";
+		$ret = db_query($query, $bookId, serialize($value));
+		//$ret = drupal_write_record($tableName, ($data));
+		echo '**************drupal_write_record return*********:::' + $ret;
+		//var_dump($data);
 	}
 
 	public function getNodeIdsFromDb($bookId) {
@@ -120,15 +125,19 @@ var_dump('------createMkdocTable('.$tableName.')');
 		$schema[$table] = array(
 			'fields' => array(
 				'bookid' => array('type' => 'int', 'not null' => TRUE),
-				'doc' => array('type' => 'varchar'),
+				'doc' => array('type' => 'text'),
 			),
 //			'primary key' => array('bookid'),
 		);
 $statements = db_create_table_sql($tableName, $schema[$table]);
-var_dump( $statements);
+foreach($statements as $statement) {
+	var_dump($statement);	
+}
+//var_dump( $statements);
 echo '<==========>';
-//db_create_table($ret, $tableName, $schema[$table]);	
-//var_dump($ret);
+$ret = array();
+db_create_table($ret, $tableName, $schema[$table]);	
+var_dump($ret);
 
 	}
 }
@@ -182,11 +191,11 @@ function createNewPageEx($bookNodeId, $yamlPageContent) {
 	$mkdoc = MkDoc::getInstance();
 	$mkdoc->setMkdocsToDb($bookNodeId,$mkdoc);
 	//var_dump($mkdoc);
-	echo '*********after parseObject';
-	//var_dump($mkdoc->getMkdocsFromDb($bookNodeId));
-
-	//var_dump(MkDoc::getInstance()->getNodeIds());
-	//var_dump(MkDoc::getInstance()->getLinkNames());
+	echo '*********after parseObject'.$bookNodeId;
+	$datamk = $mkdoc->getMkdocsFromDb($bookNodeId);
+	
+	//var_dump($datamk->pagesByLinkName);
+	//var_dump($docmk->pagesByLinkName['index.md']);
 }
 
 function parseObject($bookNodeId, $obj, $parentId) {

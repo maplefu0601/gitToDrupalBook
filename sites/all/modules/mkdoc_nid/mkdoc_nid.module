@@ -32,7 +32,7 @@ function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
 		}
 
 		$nid = mkdoc_nid_getNodeId($matches[0]);
-
+dsm($matches[0].'----'.$nid);
 		$output = '<a href="'.$nid.'">'.$matches[0].'</a>';
 
 		return $output;
@@ -59,7 +59,7 @@ function mkdoc_nid_filter_tips($delta, $format, $long = FALSE) {
 
 function mkdoc_nid_init() {
 	dsm('mkdoc_nid_init');	
-	mkdoc_nid_getNodeId();
+	//mkdoc_nid_getNodeId();
 }
 
 function mkdoc_nid_getCurrentNodeId() {
@@ -68,8 +68,8 @@ function mkdoc_nid_getCurrentNodeId() {
 
 function mkdoc_nid_getCurrentBookId($viewId) {
 
-	if(is_numeric($viewNid)) {
-		$viewNode = node_load($viewNid);
+	if(is_numeric($viewId)) {
+		$viewNode = node_load($viewId);
 
 		if($viewNode->book) {
 			$bookId = $viewNode->book['bid'];
@@ -82,23 +82,28 @@ function mkdoc_nid_getCurrentBookId($viewId) {
 }
 
 function mkdoc_nid_getNodeId($mdName) {
-
+dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 	$viewNid = mkdoc_nid_getCurrentNodeId(); 
+	dsm('-------viewId---'.$viewNid);
 	if(is_numeric($viewNid)) {
 		$bookId = mkdoc_nid_getCurrentBookId($viewNid);
+		dsm('-------bookid----'.$bookId);
 		if(is_numeric($bookId)) {
 			dsm($bookId);
 			//$bookNode = node_load($bookId);
 			//dsm($bookNode);
 
 			$mkdoc = MkDoc::getInstance();
-			$linkNames = $mkdoc->getLinkNamesFromDb($bookId);
-			$nodeIds = $mkdoc->getNodeIdsFromDb($bookId);
+			$datamk = $mkdoc->getMkdocsFromDb($bookId);
+			$linkNames = $datamk->pagesByLinkName;
+			$nodeIds = $datamk->pagesByNodeId;
 
 			$GLOBALS['mkdocLinkNames-'.$bookId] = $linkNames;
 			$GLOBALS['mkdocNodeIds-'.$bookId] = $nodeIds;
 
 			dsm($linkNames);
+
+			return $linkNames[$mdName];
 		}
 	}
 	

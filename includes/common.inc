@@ -3334,8 +3334,9 @@ function drupal_common_theme() {
  *   If true, the schema will be rebuilt instead of retrieved from the cache.
  */
 function drupal_get_schema($table = NULL, $rebuild = FALSE) {
+  dsm('drupal_get_schema-------');
   static $schema = array();
-
+dsm($schema);
   if (empty($schema) || $rebuild) {
     // Try to load the schema from cache.
     if (!$rebuild && $cached = cache_get('schema')) {
@@ -3361,6 +3362,8 @@ function drupal_get_schema($table = NULL, $rebuild = FALSE) {
       cache_set('schema', $schema);
     }
   }
+  dsm('==========drupal_get_schema');
+  dsm($schema);
 
   if (!isset($table)) {
     return $schema;
@@ -3532,16 +3535,19 @@ function drupal_schema_fields_sql($table, $prefix = NULL) {
  *   a new node.
  */
 function drupal_write_record($table, &$object, $update = array()) {
+//  dsm('9999999999999999999');
   // Standardize $update to an array.
   if (is_string($update)) {
     $update = array($update);
   }
-
+//dsm($table);
   $schema = drupal_get_schema($table);
+//  dsm('getting schema '.$table);
+//  dsm(empty($schema));
   if (empty($schema)) {
     return FALSE;
   }
-
+//dsm('--------------drupal_write_record-------------------');
   // Convert to an object if needed.
   if (is_array($object)) {
     $object = (object) $object;
