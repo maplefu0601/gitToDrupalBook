@@ -1,0 +1,6 @@
+name = "mkdoc filter"
+description = "Module providing replacing md link to node id link"
+package = "Other"
+core = 6.x
+
+

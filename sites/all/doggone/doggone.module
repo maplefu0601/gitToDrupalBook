@@ -1,0 +1,26 @@
+<?php
+
+function doggone_filter_info() {
+	$filters = array();
+	$filters['doggone'] = array(
+		'title' => t('Remove the word .md from filtered text'),
+		'process callback' => '_doggone_filter',
+
+	);
+
+	return filters;
+}
+
+
+function _doggone_filter($text, $filter, $format, $langcode, $cache, $cache_id) {
+
+	dsm($text);
+
+	return str_replace('.md', '.mmmmmdddddd', $text);
+
+}
+
+
+?>
+
+

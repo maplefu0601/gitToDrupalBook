@@ -1,0 +1,6 @@
+name = Doggone
+description = Removes the word "dog" from filtered content.
+package = "Other"
+dependencies[] = filter
+core = 6.x
+
