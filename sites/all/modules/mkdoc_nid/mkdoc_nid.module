@@ -33,7 +33,11 @@ function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
 
 		$nid = mkdoc_nid_getNodeId($matches[1]);
 dsm($matches[1].'----'.$nid);
-		$output = '<a href="'.$nid.'">'.$matches[0].'</a>';
+		if($nid === NULL) {
+			$output = $matches[0];	
+		} else {
+			$output = '<a href="'.$nid.'">'.$matches[0].'</a>';
+		}
 
 		return $output;
 		
@@ -95,18 +99,33 @@ dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
+			dsm($datamk);
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 
-			$GLOBALS['mkdocLinkNames-'.$bookId] = $linkNames;
-			$GLOBALS['mkdocNodeIds-'.$bookId] = $nodeIds;
+			//$GLOBALS['mkdocLinkNames-'.$bookId] = $linkNames;
+			//$GLOBALS['mkdocNodeIds-'.$bookId] = $nodeIds;
 
 			dsm($linkNames[$mdName]);
 			dsm($linkNames[$mdName]->nodeId);
 
+			$pos = strpos($mdName, '/');
+			if($pos === false) {
+
+				dsm('=======no subfolder in md link=======');
+				$mdLink = $nodeIds[$viewNid]->mdLink;
+				dsm($mdLink);
+				$folder = substr($mdLink, 0, strpos($mdLink, '/'));
+				dsm($folder);
+
+				return $linkNames[$folder.'/'.$mdName]->nodeId;
+			}
+
 			return $linkNames[$mdName]->nodeId;
 		}
 	}
+
+	return NULL;
 	
 	
 }

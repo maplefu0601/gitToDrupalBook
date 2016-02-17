@@ -5,9 +5,47 @@ $GLOBALS['dataFolder'] = "";
 $GLOBALS['bookNodeId'] = 'new';
 $GLOBALS['mapMkdoc'] = array();
 
+function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+	
+	dsm('6666666666666'.$op);
+	switch($op) {
+		case 'presave':
+			dsm($node);
+			$viewNid = $node->nid;
+			$bookId = mkdoc_nid_getCurrentBookId($viewNid);
+			$content = $node->body;
+			$bookFolder = mkdoc_book_getBookFolder($bookId);
+			dsm($viewNid.'---bookid========'.$bookId);
+			$mkdoc = MkDoc::getInstance();
+			$datamk = $mkdoc->getMkdocsFromDb($bookId);
+			dsm($datamk);
+			$linkNames = $datamk->pagesByLinkName;
+			$nodeIds = $datamk->pagesByNodeId;
+			$mdLink = $nodeIds[$viewNid]->mdLink;
+			dsm($mdLink);
+
+			updateMdContent($mdLink, $content, $bookFolder);
+			break;
+	}
+}
+
+
+function updateMdContent($name, $content, $folder) {
+	$url = 'http://54.69.251.157:6600/updateMdContent';
+	$data = array('name' => $name, 'content' => $content, 'folder' => $folder);
+	$fieldsData = json_encode($data);
+	$header = "Content-type: application/x-www-form-urlencoded\r\n" . "Content-Length: " . strlen($fieldsData) . "\r\n";
+
+	$response = drupal_http_request($url, $header,'POST', $fieldsData);
+	dsm($response);
+
+
+}
+
 function mkdoc_book_menu()
 {
 	$items = array();
+	
 	$items['mkdoc_book/new'] = array(
 		     'title' => 'gdc book',
 			 'page callback' => 'mkdoc_book_new',
@@ -15,6 +53,7 @@ function mkdoc_book_menu()
 			 'access callback' => TRUE,
 			 'type' => MENU_CALLBACK
 			 );
+	
 
 	return $items;
 
@@ -28,13 +67,58 @@ function mkdoc_book_new() {
 	var_dump($_POST);
 	$GLOBALS["dataFolder"] = $_POST["datafolder"]."/docs/";
 
-    //create a book node
-	createNewBook($_POST['name']);
+	$name = $_POST['name'];
+	$bookFolder = $_POST['docfolder'];	//github folder name
+	$dataFolder = $_POST['datafolder']."/docs/";
+	$bookId = mkdoc_book_exists($bookFolder);
+	if($bookId) {
+		//update current book
+		mkdoc_book_updateBookContent($bookId, $dataFolder);	
+	} else {
+		//create a book node
+		mkdoc_book_createNewBook($name, $bookFolder);
+	}
 	
     //foreach page
 		//create a page node
 	return "Im here----".$_POST['name'];	
 
+}
+
+function mkdoc_book_getBookFolder($bookId) {
+
+	$tableName = 'mkdocids';
+	if(db_table_exists($tableName)) {
+		$query = "select bookfolder from {$tableName} where bookid=%d";
+		$ret = db_query($query, $bookId);
+
+		if(count($ret) > 0) {
+			$data = db_fetch_array($ret);
+
+			if($data != FALSE) {
+				return $data['bookfolder'];	
+			}
+		}
+	}
+	return false;	
+}
+
+function mkdoc_book_exists($bookFolder) {
+
+	$tableName = 'mkdocids';
+	if(db_table_exists($tableName)) {
+		$query = "select bookid from {$tableName} where bookfolder=%d";
+		$ret = db_query($query, $bookFolder);
+
+		if(count($ret) > 0) {
+			$data = db_fetch_array($ret);
+
+			if($data != FALSE) {
+				return $data['bookid'];	
+			}
+		}
+	}
+	return false;	
 }
 
 class MkDoc
@@ -96,7 +180,7 @@ class MkDoc
 		}
 	}
 
-	public function setMkdocsToDb($bookId, $value) {
+	public function setMkdocsToDb($bookId, $value, $bookFolder) {
 		$tableName = 'mkdocids';
 		if(!db_table_exists($tableName)) {
 			$this->createMkdocTable($tableName);
@@ -104,8 +188,8 @@ class MkDoc
 
 		$data = serialize(array($bookId => ($value)));
 		var_dump($data);
-		$query = "insert into {$tableName} values(%d, '%s')";
-		$ret = db_query($query, $bookId, serialize($value));
+		$query = "insert into {$tableName} values(%d, '%s', '%s')";
+		$ret = db_query($query, $bookId, serialize($value), $bookFolder);
 		//$ret = drupal_write_record($tableName, ($data));
 		echo '**************drupal_write_record return*********:::' + $ret;
 		//var_dump($data);
@@ -126,6 +210,7 @@ var_dump('------createMkdocTable('.$tableName.')');
 			'fields' => array(
 				'bookid' => array('type' => 'int', 'not null' => TRUE),
 				'doc' => array('type' => 'text'),
+				'bookfolder' => array('type' => 'text'),
 			),
 //			'primary key' => array('bookid'),
 		);
@@ -142,17 +227,47 @@ var_dump($ret);
 	}
 }
 
-function createNewBook($name) {
+function mkdoc_book_updateBookContent($bookId, $dataFolder) {
+
+	$tableName = 'mkdocids';
+	$query = "select doc from {$tableName} where bookid=%d";
+	$ret = db_query($query, $bookId);
+
+	if(count($ret) > 0) {
+		$data = db_fetch_array($ret);
+
+		if($data != FALSE) {
+			$mkdoc = unserialize($data['doc']);
+
+			$linkNames = $mkdoc->pagesByLinkName;
+dsm($linkNames);
+			foreach($linkNames as $name => $val) {
+				//get md file content
+				//overwrite page content with node id
+				var_dump('updating file '.$dataFolder.$name);
+				$file = file_get_contents($dataFolder.$name);
+				$node = node_load($val->nodeId);
+				$node->body = $file;
+
+				node_save($node);
+			}
+		}
+	}
+	
+}
+
+function mkdoc_book_createNewBook($name) {
 	$file = file_get_contents($name);
 	//var_dump($file);
 	//var_dump(base64_decode($file));
 	$data = json_decode(base64_decode($file), true);
 	//var_dump($data['site_name']);
+	$bookFolder = $_POST['bookfolder'];
 
-	createBookNode($data);
+	createBookNode($bookFolder, $data);
 }
 
-function createBookNode($data) {
+function createBookNode($bookFolder, $data) {
 	
 	$node = new stdClass();
 	$node->book = array('bid'=>'new');
@@ -172,6 +287,8 @@ function createBookNode($data) {
 	node_save($node);
 	$bookNodeId = $node->nid;
 
+	mkdoc_book_saveBookFolderToDb($bookFolder, $bookNodeId);
+
 	$mkdoc = MkDoc::getInstance();
 	$mkdoc->siteName = $node->name;
 	$mkdoc->bookId = $bookNodeId;
@@ -180,16 +297,20 @@ function createBookNode($data) {
 
 	$yamlPageContent = json_encode($data['pages']);
 	//createNewPage($bookNodeId, $yamlPageContent);
-	createNewPageEx($bookNodeId, $yamlPageContent);
+	createNewPageEx($bookNodeId, $bookFolder, $yamlPageContent);
 }
 
-function createNewPageEx($bookNodeId, $yamlPageContent) {
+function mkdoc_book_saveBookFolderToDb($bookFolder, $bookNodeId) {
+	
+}
+
+function createNewPageEx($bookNodeId, $bookFolder, $yamlPageContent) {
 	$yamlObj = json_decode($yamlPageContent);
 
 	parseObject($bookNodeId, $yamlObj, NULL);
 
 	$mkdoc = MkDoc::getInstance();
-	$mkdoc->setMkdocsToDb($bookNodeId,$mkdoc);
+	$mkdoc->setMkdocsToDb($bookNodeId,$mkdoc, $bookFolder);
 	//var_dump($mkdoc);
 	echo '*********after parseObject'.$bookNodeId;
 	$datamk = $mkdoc->getMkdocsFromDb($bookNodeId);
@@ -232,6 +353,7 @@ function parseObject($bookNodeId, $obj, $parentId) {
 					
 					$parentId = createPageNodeEx($bookNodeId,$parentId, $key, $key);
 					$saveObj->nodeId = $parentId;
+					$saveObj->mdLink = $val;
 					$saveObj->title = $key;
 					$mkdoc->savePageByNodeId($parentId, $saveObj);
 
@@ -254,6 +376,7 @@ function parseObject($bookNodeId, $obj, $parentId) {
 
 					$saveObj->nodeId = $nodeId;
 					$saveObj->title = $key;
+					$saveObj->mdLink = $val;
 					$mkdoc->savePageByNodeId($nodeId, $saveObj);
 					$mkdoc->savePageByLinkName($val, $saveObj);
 				}
