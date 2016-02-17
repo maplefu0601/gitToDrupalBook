@@ -425,7 +425,7 @@ function filter_list_format($format) {
  *    set to TRUE so the user's permissions are checked.
  */
 function check_markup($text, $format = FILTER_FORMAT_DEFAULT, $check = TRUE) {
- dsm('-------check_markup');
+ ////dsm('-------check_markup');
  // When $check = TRUE, do an access check on $format.
   if (isset($text) && (!$check || filter_access($format))) {
     $format = filter_resolve_format($format);
@@ -445,7 +445,7 @@ function check_markup($text, $format = FILTER_FORMAT_DEFAULT, $check = TRUE) {
 
     // Get a complete list of filters, ordered properly.
     $filters = filter_list_format($format);
-dsm($filters);
+//dsm($filters);
 
     // Give filters the chance to escape HTML-like data such as code or formulas.
     foreach ($filters as $filter) {

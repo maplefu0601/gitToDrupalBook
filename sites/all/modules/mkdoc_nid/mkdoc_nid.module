@@ -5,8 +5,8 @@
  * Implementation of hook_filter()
  */
 function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
-  dsm('******************mkdoc_filter*****');
-  dsm($op);
+  //dsm('******************mkdoc_filter*****');
+  //dsm($op);
   switch ($op) {
   case 'list':
     return array(0 => t('Insert node'));
@@ -32,7 +32,7 @@ function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
 		}
 
 		$nid = mkdoc_nid_getNodeId($matches[1]);
-dsm($matches[1].'----'.$nid);
+//dsm($matches[1].'----'.$nid);
 		if($nid === NULL) {
 			$output = $matches[0];	
 		} else {
@@ -49,7 +49,7 @@ function mkdoc_nid_getNodeId($mdName) {
 
 	$mkdoc = MkDoc::getInstance();
 	$linkNames = $mkdoc->getLinkNames();
-	//dsm($linkNames);
+	////dsm($linkNames);
 
 }
 */
@@ -62,7 +62,7 @@ function mkdoc_nid_filter_tips($delta, $format, $long = FALSE) {
 }
 
 function mkdoc_nid_init() {
-	dsm('mkdoc_nid_init');	
+	//dsm('mkdoc_nid_init');	
 	//mkdoc_nid_getNodeId();
 }
 
@@ -86,39 +86,43 @@ function mkdoc_nid_getCurrentBookId($viewId) {
 }
 
 function mkdoc_nid_getNodeId($mdName) {
-dsm('-------mkdoc_nid_getNodeId---'.$mdName);
+//dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 	$viewNid = mkdoc_nid_getCurrentNodeId(); 
-	dsm('-------viewId---'.$viewNid);
+	//dsm('-------viewId---'.$viewNid);
 	if(is_numeric($viewNid)) {
 		$bookId = mkdoc_nid_getCurrentBookId($viewNid);
-		dsm('-------bookid----'.$bookId);
+		//dsm('-------bookid----'.$bookId);
 		if(is_numeric($bookId)) {
-			dsm($bookId);
+			//dsm($bookId);
 			//$bookNode = node_load($bookId);
-			//dsm($bookNode);
+			////dsm($bookNode);
 
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
-			dsm($datamk);
+			//dsm($datamk);
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 
 			//$GLOBALS['mkdocLinkNames-'.$bookId] = $linkNames;
 			//$GLOBALS['mkdocNodeIds-'.$bookId] = $nodeIds;
 
-			dsm($linkNames[$mdName]);
-			dsm($linkNames[$mdName]->nodeId);
+			//dsm($linkNames[$mdName]);
+			//dsm($linkNames[$mdName]->nodeId);
 
 			$pos = strpos($mdName, '/');
 			if($pos === false) {
 
-				dsm('=======no subfolder in md link=======');
+				//dsm('=======no subfolder in md link=======');
 				$mdLink = $nodeIds[$viewNid]->mdLink;
-				dsm($mdLink);
+				//dsm($mdLink);
 				$folder = substr($mdLink, 0, strpos($mdLink, '/'));
-				dsm($folder);
+				//dsm($folder);
 
 				return $linkNames[$folder.'/'.$mdName]->nodeId;
+			}
+
+			if($mdName[0] === '/') {
+				$mdName = substr($mdName, 1);	
 			}
 
 			return $linkNames[$mdName]->nodeId;
@@ -132,6 +136,6 @@ dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 
 
 function mkdoc_nid_preprocess_node() {
-	dsm('mkdoc_nid_preprocess_node');	
+	//dsm('mkdoc_nid_preprocess_node');	
 }
 

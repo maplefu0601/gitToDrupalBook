@@ -436,7 +436,7 @@ function _book_add_form_elements(&$form, $node) {
  * node editing, node deletion, or the outline tab.
  */
 function _book_update_outline(&$node) {
-  dsm($node);
+  //dsm(($node);
   if (empty($node->book['bid'])) {
     return FALSE;
   }
@@ -445,14 +445,14 @@ function _book_update_outline(&$node) {
   $node->book['link_path'] = 'node/'. $node->nid;
   $node->book['link_title'] = $node->title;
   $node->book['parent_mismatch'] = FALSE; // The normal case.
-dsm( "----$node->book['plid']:".$node->book['plid']);
+//dsm(( "----$node->book['plid']:".$node->book['plid']);
 
   if ($node->book['bid'] == $node->nid) {
     $node->book['plid'] = 0;
     $node->book['menu_name'] = book_menu_name($node->nid);
   }
   else {
-dsm( "******".$new."******");
+//dsm(( "******".$new."******");
 // Check in case the parent is not is this book; the book takes precedence.
     if (!empty($node->book['plid'])) {
       $parent = db_fetch_array(db_query("SELECT * FROM {book} WHERE mlid = %d", $node->book['plid']));
@@ -692,7 +692,7 @@ function book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       break;
     case 'insert':
     case 'update':
-	dsm($node, 'book module');
+	//dsm(($node, 'book module');
       if (!empty($node->book['bid'])) {
         if ($node->book['bid'] == 'new') {
           // New nodes that are their own book.

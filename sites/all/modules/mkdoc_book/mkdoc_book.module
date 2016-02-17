@@ -7,22 +7,25 @@ $GLOBALS['mapMkdoc'] = array();
 
 function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 	
-	dsm('6666666666666'.$op);
+	//dsm('6666666666666'.$op);
 	switch($op) {
 		case 'presave':
-			dsm($node);
+			//dsm($node);
 			$viewNid = $node->nid;
 			$bookId = mkdoc_nid_getCurrentBookId($viewNid);
+			if(!$bookId) {
+				break;	
+			}
 			$content = $node->body;
 			$bookFolder = mkdoc_book_getBookFolder($bookId);
-			dsm($viewNid.'---bookid========'.$bookId);
+			var_dump($viewNid.'---bookid========'.$bookId);
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
-			dsm($datamk);
+			//dsm($datamk);
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 			$mdLink = $nodeIds[$viewNid]->mdLink;
-			dsm($mdLink);
+			//dsm($mdLink);
 
 			updateMdContent($mdLink, $content, $bookFolder);
 			break;
@@ -35,9 +38,8 @@ function updateMdContent($name, $content, $folder) {
 	$data = array('name' => $name, 'content' => $content, 'folder' => $folder);
 	$fieldsData = json_encode($data);
 	$header = "Content-type: application/x-www-form-urlencoded\r\n" . "Content-Length: " . strlen($fieldsData) . "\r\n";
-
 	$response = drupal_http_request($url, $header,'POST', $fieldsData);
-	dsm($response);
+	//dsm($response);
 
 
 }
@@ -62,15 +64,16 @@ function mkdoc_book_menu()
 function mkdoc_book_new() {
 	//pass the location of the json file, $_POST will have the value
 	//read the json file http://php.net/manual/en/function.json-decode.php
-	dsm($_SERVER);
-	dsm($_POST);
+	//dsm($_SERVER);
+	//dsm($_POST);
 	var_dump($_POST);
 	$GLOBALS["dataFolder"] = $_POST["datafolder"]."/docs/";
 
 	$name = $_POST['name'];
-	$bookFolder = $_POST['docfolder'];	//github folder name
+	$bookFolder = $_POST['bookfolder'];	//github folder name
 	$dataFolder = $_POST['datafolder']."/docs/";
 	$bookId = mkdoc_book_exists($bookFolder);
+	var_dump('====*************==========bookid:'.$bookId.'===='.$bookFolder);
 	if($bookId) {
 		//update current book
 		mkdoc_book_updateBookContent($bookId, $dataFolder);	
@@ -104,16 +107,16 @@ function mkdoc_book_getBookFolder($bookId) {
 }
 
 function mkdoc_book_exists($bookFolder) {
-
+var_dump($bookFolder);
 	$tableName = 'mkdocids';
 	if(db_table_exists($tableName)) {
-		$query = "select bookid from {$tableName} where bookfolder=%d";
+		$query = "select bookid from {$tableName} where bookfolder='%s'";
 		$ret = db_query($query, $bookFolder);
-
+var_dump($ret);
 		if(count($ret) > 0) {
 			$data = db_fetch_array($ret);
-
-			if($data != FALSE) {
+var_dump($data);
+			if($data) {
 				return $data['bookid'];	
 			}
 		}
@@ -147,7 +150,7 @@ class MkDoc
 	}
 
 	public function savePageByNodeId($nodeId, $value) {
-		echo 'save node id:--------'.$nodeId.'--------'.$value;
+		var_dump( 'save node id:--------'.$nodeId.'--------'.$value);
 		$this->pagesByNodeId[$nodeId] = $value;
 	}
 
@@ -156,7 +159,7 @@ class MkDoc
 	}
 
 	public function savePageByLinkName($name, $value) {
-		echo '======save link name:'.$name.'---'.$value;
+		var_dump( '======save link name:'.$name.'---'.$value);
 		$this->pagesByLinkName[$name] = $value;
 	}
 
@@ -240,7 +243,7 @@ function mkdoc_book_updateBookContent($bookId, $dataFolder) {
 			$mkdoc = unserialize($data['doc']);
 
 			$linkNames = $mkdoc->pagesByLinkName;
-dsm($linkNames);
+//dsm($linkNames);
 			foreach($linkNames as $name => $val) {
 				//get md file content
 				//overwrite page content with node id
@@ -345,7 +348,7 @@ function parseObject($bookNodeId, $obj, $parentId) {
 			$attr = is_object($chapterValue) ? get_object_vars($chapterValue) : $chapterValue;
 
 			foreach($attr as $key => $val) {
-				print($key.'------'.$val.'-------is md link:'.isMdLink($val));
+				var_dump($key.'------'.$val.'-------is md link:'.isMdLink($val));
 				
 				if(is_array($val)) {
 					$saveObj = new stdClass();
