@@ -265,7 +265,7 @@ function mkdoc_book_createNewBook($name) {
 	//var_dump(base64_decode($file));
 	//$data = json_decode(base64_decode($file), true);
 	$data = json_decode(($file), true);
-	//var_dump($data['site_name']);
+	var_dump($data);
 	$bookFolder = $_POST['bookfolder'];
 
 	createBookNode($bookFolder, $data);

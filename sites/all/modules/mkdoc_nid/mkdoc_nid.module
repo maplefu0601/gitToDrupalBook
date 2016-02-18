@@ -5,11 +5,11 @@
  * Implementation of hook_filter()
  */
 function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
-  //dsm('******************mkdoc_filter*****');
-  //dsm($op);
+  dsm('******************mkdoc_filter*****');
+  dsm($op);
   switch ($op) {
   case 'list':
-    return array(0 => t('Insert node'));
+    return array(0 => t('Mark doc to node id'));
 
   case 'description':
     return t('By including the syntax (*.md), this filter will embed the node with given NID');
@@ -24,7 +24,7 @@ function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
 
 	//$viewNid = mkdoc_nid_getCurrentNodeId();
 	//$bookId = mkdoc_nid_getCurrentBookId($viewNid);
-
+	dsm($text);
     return preg_replace_callback('/\(([^(]*\.md)\)/', function($matches) {
 		
 		//if(is_numeric($bookId)) {
@@ -86,7 +86,7 @@ function mkdoc_nid_getCurrentBookId($viewId) {
 }
 
 function mkdoc_nid_getNodeId($mdName) {
-//dsm('-------mkdoc_nid_getNodeId---'.$mdName);
+dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 	$viewNid = mkdoc_nid_getCurrentNodeId(); 
 	//dsm('-------viewId---'.$viewNid);
 	if(is_numeric($viewNid)) {
@@ -99,7 +99,7 @@ function mkdoc_nid_getNodeId($mdName) {
 
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
-			//dsm($datamk);
+			dsm($datamk);
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 
