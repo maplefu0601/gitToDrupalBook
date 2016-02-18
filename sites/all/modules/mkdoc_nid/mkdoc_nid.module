@@ -22,14 +22,14 @@ function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
 
   case "process":
 
-	$viewNid = mkdoc_nid_getCurrentNodeId();
-	$bookId = mkdoc_nid_getCurrentBookId($viewNid);
+	//$viewNid = mkdoc_nid_getCurrentNodeId();
+	//$bookId = mkdoc_nid_getCurrentBookId($viewNid);
 
     return preg_replace_callback('/\(([^(]*\.md)\)/', function($matches) {
 		
-		if(is_numeric($bookId)) {
-			$linkNames = $GLOBALS['mkdocLinkNames-'.$bookId];	
-		}
+		//if(is_numeric($bookId)) {
+		//	$linkNames = $GLOBALS['mkdocLinkNames-'.$bookId];	
+		//}
 
 		$nid = mkdoc_nid_getNodeId($matches[1]);
 //dsm($matches[1].'----'.$nid);
@@ -110,19 +110,34 @@ function mkdoc_nid_getNodeId($mdName) {
 			//dsm($linkNames[$mdName]->nodeId);
 
 			$pos = strpos($mdName, '/');
-			if($pos === false) {
+			if($pos === false) {//md file name only
 
 				//dsm('=======no subfolder in md link=======');
 				$mdLink = $nodeIds[$viewNid]->mdLink;
 				//dsm($mdLink);
 				$folder = substr($mdLink, 0, strpos($mdLink, '/'));
 				//dsm($folder);
+				if($folder != '') {
 
-				return $linkNames[$folder.'/'.$mdName]->nodeId;
-			}
+					return $linkNames[$folder.'/'.$mdName]->nodeId;
+				} else {
+					return $linkNames[$mdName]->nodeId;	
+				}
 
-			if($mdName[0] === '/') {
+			} else if($mdName[0] === '/') {
 				$mdName = substr($mdName, 1);	
+			} else {
+					
+				$mdLink = $nodeIds[$viewNid]->mdLink;
+				//dsm($mdLink);
+				$folder = substr($mdLink, 0, strpos($mdLink, '/'));
+				//dsm($folder);
+				if($folder != '') {
+
+					return $linkNames[$folder.'/'.$mdName]->nodeId;
+				} else {
+					return $linkNames[$mdName]->nodeId;	
+				}
 			}
 
 			return $linkNames[$mdName]->nodeId;
