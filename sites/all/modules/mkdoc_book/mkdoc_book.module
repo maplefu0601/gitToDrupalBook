@@ -131,7 +131,8 @@ class MkDoc
 {
 	public $siteName;
 	public $bookId;
-	public $repoUrl;
+	public $bookFolder;
+	public $gitRepoUrl;
 	public $pagesByNodeId = array();
 	public $pagesByLinkName = array();
 
@@ -303,6 +304,7 @@ function createBookNode($bookFolder, $repoUrl, $data) {
 	$mkdoc->siteName = $node->name;
 	$mkdoc->bookId = $bookNodeId;
 	$mkdoc->gitRepoUrl = $repoUrl;
+	$mkdoc->bookFolder = $bookFolder;
 
 	$GLOBALS['bookNodeId'] = $bookNodeId;
 
@@ -311,7 +313,7 @@ function createBookNode($bookFolder, $repoUrl, $data) {
 	createNewPageEx($bookNodeId, $bookFolder, $repoUrl, $yamlPageContent);
 }
 
-function mkdoc_book_saveBookFolderToDb($bookFolder, $bookNodeId) {
+function mkdoc_book_saveBookFolderToDb($bookFolder, $repoUrl, $bookNodeId) {
 	
 }
 

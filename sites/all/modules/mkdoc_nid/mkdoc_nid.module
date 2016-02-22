@@ -24,24 +24,10 @@ function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
 
 	//$viewNid = mkdoc_nid_getCurrentNodeId();
 	//$bookId = mkdoc_nid_getCurrentBookId($viewNid);
-	dsm($text);
-    return preg_replace_callback('/\(([^(]*\.md)\)/', function($matches) {
-		
-		//if(is_numeric($bookId)) {
-		//	$linkNames = $GLOBALS['mkdocLinkNames-'.$bookId];	
-		//}
+	//dsm($text);
 
-		$nid = mkdoc_nid_getNodeId($matches[1]);
-//dsm($matches[1].'----'.$nid);
-		if($nid === NULL) {
-			$output = $matches[0];	
-		} else {
-			$output = '<a href="'.$nid.'">'.$matches[0].'</a>';
-		}
+	return mkdoc_nid_convertion($text);
 
-		return $output;
-		
-	}, $text);
   }
 }
 /*
@@ -53,6 +39,59 @@ function mkdoc_nid_getNodeId($mdName) {
 
 }
 */
+
+function mkdoc_nid_convertion($text) {
+
+	$text = mkdoc_nid_convertMdLinks($text);
+
+	$text = mkdoc_nid_convertImages($text);
+
+	$text = mkdoc_nid_convertAudios($text);
+
+	$text = mkdoc_nid_convertVideos($text);
+
+	$text = mkdoc_nid_convertDocuments($text);
+
+	return $text;
+	
+}
+
+function mkdoc_nid_convertMdLinks($text) {
+	
+    return preg_replace_callback('/\(([^(]*\.md)\)/', function($matches) {
+		
+		$nid = mkdoc_nid_getNodeId($matches[1]);
+
+		if($nid === NULL) {
+			$output = $matches[0];	
+		} else {
+			$output = '<a href="'.$nid.'">'.$matches[0].'</a>';
+		}
+
+		return $output;
+		
+	}, $text);
+	
+}
+
+function mkdoc_nid_convertImages($text) {
+	
+    return preg_replace_callback('/\((.*\.(bmp|jpeg|jpg|gif|tif))/', function($matches) {
+		
+
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[0]);
+
+		if($linkFolder === NULL) {
+			$output = $matches[0];	
+		} else {
+			$output = '<img source="'.$linkFolder.'" alt="'.$matches[0].'>';
+		}
+
+		return $output;
+		
+	}, $text);
+	
+}
 
 /**
  * Implementation of hook_filter_tips()
@@ -84,6 +123,69 @@ function mkdoc_nid_getCurrentBookId($viewId) {
 	return NULL;
 	
 }
+
+function mkdoc_nid_getNodeFolder($mediaName) {
+dsm('-------mkdoc_nid_getNodeId---'.$mediaName);
+	
+	$baseFolder = '/files/gdc-docs/gitdata/';
+	$retFolder = "";
+	$viewNid = mkdoc_nid_getCurrentNodeId(); 
+	//dsm('-------viewId---'.$viewNid);
+	if(is_numeric($viewNid)) {
+		$bookId = mkdoc_nid_getCurrentBookId($viewNid);
+		//dsm('-------bookid----'.$bookId);
+		if(is_numeric($bookId)) {
+			//dsm($bookId);
+			//$bookNode = node_load($bookId);
+			////dsm($bookNode);
+
+			$mkdoc = MkDoc::getInstance();
+			$datamk = $mkdoc->getMkdocsFromDb($bookId);
+			dsm($datamk);
+			$linkNames = $datamk->pagesByLinkName;
+			$nodeIds = $datamk->pagesByNodeId;
+			$bookFolder = $datamk->bookFolder;
+
+			$retFolder = $baseFolder.$bookFolder.'/docs/';
+
+			//$GLOBALS['mkdocLinkNames-'.$bookId] = $linkNames;
+			//$GLOBALS['mkdocNodeIds-'.$bookId] = $nodeIds;
+
+			//dsm($linkNames[$mdName]);
+			//dsm($linkNames[$mdName]->nodeId);
+
+			$pos = strpos($mediaName, '/');
+			if($pos === false || $mediaName[0] !== '/') {//media file name only or is root folder
+
+				//dsm('=======no subfolder in md link=======');
+				$mdLink = $nodeIds[$viewNid]->mdLink;
+				//dsm($mdLink);
+				$folder = substr($mdLink, 0, strpos($mdLink, '/'));
+				//dsm($folder);
+				if($folder != '') {
+
+					$retFolder .= $folder.'/'.$mediaName;
+
+				} else {
+
+					$retFolder .= $mediaName;	
+				}
+
+			} else if($mediaName[0] === '/') {
+				$mediaName = substr($mediaName, 1);
+				$retFolder .= $mediaName;
+			}
+					
+
+			return $retFolder;
+		}
+	}
+
+	return $retFolder;
+	
+	
+}
+
 
 function mkdoc_nid_getNodeId($mdName) {
 dsm('-------mkdoc_nid_getNodeId---'.$mdName);
