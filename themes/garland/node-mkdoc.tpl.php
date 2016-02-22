@@ -1,5 +1,5 @@
 <?php
-dsm($node, 'mkdocs');
+//dsm($node, 'mkdocs');
 //if not connected to the repo then attempt to do a git pull
 //if not found then print usernames for git repository
 print 'please give "Raymond_Fu" access to your bitbucket.org project';
@@ -21,16 +21,19 @@ print 'please give "Raymond_Fu" access to your bitbucket.org project';
 			$header = "Content-type: application/x-www-form-urlencoded\r\n" . "Content-Length: " . strlen($fieldsData) . "\r\n";
 			//$response = drupal_http_request($url, $header,'POST', $fieldsData);
 			$response = drupal_http_request($url.'?gitRepoUrl='.$gitRepoUrl, $header,'GET');
-			dsm($response);
+			//dsm($response);
+			print nl2br("\n\nPlease add '".$url."?gitRepoUrl=".$gitRepoUrl."' to your git webhook. \n\n");
 
 		}
 		
-		dsm('================creating new book=======');
+		//dsm('================creating new book=======');
+		//dsm($node);
+		//dsm($node->field_git_repo_url[0]['value']);
 		//$repo = 'git@bitbucket.org:jyamada/col.git';
-		$repo = 'git@bitbucket.org:Raymond_Fu/docFromJson.git';
-		dsm($repo);
+		$repo = $node->field_git_repo_url[0]['value'];//'git@bitbucket.org:Raymond_Fu/docFromJson.git';
+		//dsm($repo);
 		createNewMkdocBook($repo);
-		dsm('end============new book====='); 
+		//dsm('end============new book====='); 
 	?></span>
 
   <?php endif; ?>
