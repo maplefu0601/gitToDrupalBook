@@ -51,7 +51,7 @@ function mkdoc_nid_convertion($text) {
 	$text = mkdoc_nid_convertVideos($text);
 
 	$text = mkdoc_nid_convertDocuments($text);
-
+dsm($text);
 	return $text;
 	
 }
@@ -76,15 +76,15 @@ function mkdoc_nid_convertMdLinks($text) {
 
 function mkdoc_nid_convertImages($text) {
 	
-    return preg_replace_callback('/\((.*\.(bmp|jpeg|jpg|gif|tif))/', function($matches) {
+    return preg_replace_callback('/\((.*\.(bmp|jpeg|jpg|gif|tif))\)/', function($matches) {
 		
-
-		$linkFolder = mkdoc_nid_getNodeFolder($matches[0]);
+dsm($matches);
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[1]);
 
 		if($linkFolder === NULL) {
-			$output = $matches[0];	
+			$output = $matches[1];	
 		} else {
-			$output = '<img source="'.$linkFolder.'" alt="'.$matches[0].'>';
+			$output = '<img src="'.$linkFolder.'" alt="'.$matches[1].'">';
 		}
 
 		return $output;
@@ -95,15 +95,15 @@ function mkdoc_nid_convertImages($text) {
 
 function mkdoc_nid_convertAudios($text) {
 	
-    return preg_replace_callback('/\((.*\.(mp3|ogg|wav))/', function($matches) {
+    return preg_replace_callback('/\((.*\.(mp3|ogg|wav))\)/', function($matches) {
 		
 
-		$linkFolder = mkdoc_nid_getNodeFolder($matches[0]);
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[1]);
 
 		if($linkFolder === NULL) {
-			$output = $matches[0];	
+			$output = $matches[1];	
 		} else {
-			$output = '<audio width="100%" <source type="audio/'.$matches[1].'" src="'.$linkFolder.'"></source></audio>';
+			$output = '<audio width="100%" <source type="audio/'.$matches[2].'" src="'.$linkFolder.'"></source></audio>';
 		}
 
 		return $output;
@@ -114,15 +114,15 @@ function mkdoc_nid_convertAudios($text) {
 
 function mkdoc_nid_convertVideos($text) {
 	
-    return preg_replace_callback('/\((.*\.(mp4|mpeg|avi))/', function($matches) {
+    return preg_replace_callback('/\((.*\.(mp4|mpeg|avi))\)/', function($matches) {
 		
 
-		$linkFolder = mkdoc_nid_getNodeFolder($matches[0]);
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[1]);
 
 		if($linkFolder === NULL) {
-			$output = $matches[0];	
+			$output = $matches[1];	
 		} else {
-			$output = '<video width="100%" <source type="video/'.$matches[1].'" src="'.$linkFolder.'"></source></video>';
+			$output = '<video width="100%" <source type="video/'.$matches[2].'" src="'.$linkFolder.'"></source></video>';
 		}
 
 		return $output;
@@ -133,15 +133,14 @@ function mkdoc_nid_convertVideos($text) {
 
 function mkdoc_nid_convertDocuments($text) {
 	
-    return preg_replace_callback('/\((.*\.(docx|exls|ppt|pdf))/', function($matches) {
+    return preg_replace_callback('/\((.*\.(docx|exls|ppt|pdf))\)/', function($matches) {
 		
-
-		$linkFolder = mkdoc_nid_getNodeFolder($matches[0]);
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[1]);
 
 		if($linkFolder === NULL) {
-			$output = $matches[0];	
+			$output = $matches[1];	
 		} else {
-			$output = '<object type="application/'.$matches[1].'" data="'.$linkFolder.'"><p>'.$matches[0].'</p></object>';
+			$output = '<object width="100%" type="application/'.$matches[2].'" data="'.$linkFolder.'?#zoom=100"><p>'.$matches[1].'</p></object>';
 		}
 
 		return $output;
