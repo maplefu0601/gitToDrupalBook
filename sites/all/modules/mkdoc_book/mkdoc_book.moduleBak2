@@ -110,7 +110,6 @@ function mkdoc_book_getBookFolder($bookId) {
 }
 
 function mkdoc_book_exists($bookFolder) {
-var_dump('====================mkdoc_book_exists');
 var_dump($bookFolder);
 	$tableName = 'mkdocids';
 	if(db_table_exists($tableName)) {
@@ -121,15 +120,7 @@ var_dump($ret);
 			$data = db_fetch_array($ret);
 var_dump($data);
 			if($data) {
-
-				$bookId = $data['bookid'];
-				$nodeBook = node_load($bookId);
-				if($nodeBook) {
-					return $bookId;	
-				} else {
-					$query = "delete from {$tableName} where bookid=%d";
-					$ret = db_query($query, $bookId);
-				}
+				return $data['bookid'];	
 			}
 		}
 	}
