@@ -10,7 +10,7 @@ function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 	//dsm('6666666666666'.$op);
 	switch($op) {
 		case 'presave':
-			dsm($node);
+			//dsm($node);
 			$viewNid = $node->nid;
 			$bookId = mkdoc_nid_getCurrentBookId($viewNid);
 			if(!$bookId) {

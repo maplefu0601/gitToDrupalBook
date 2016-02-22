@@ -5,8 +5,8 @@
  * Implementation of hook_filter()
  */
 function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
-  dsm('******************mkdoc_filter*****');
-  dsm($op);
+  //dsm('******************mkdoc_filter*****');
+  //dsm($op);
   switch ($op) {
   case 'list':
     return array(0 => t('Mark doc to node id'));
@@ -51,7 +51,7 @@ function mkdoc_nid_convertion($text) {
 	$text = mkdoc_nid_convertVideos($text);
 
 	$text = mkdoc_nid_convertDocuments($text);
-dsm($text);
+//dsm($text);
 	return $text;
 	
 }
@@ -78,7 +78,7 @@ function mkdoc_nid_convertImages($text) {
 	
     return preg_replace_callback('/\((.*\.(bmp|jpeg|jpg|gif|tif))\)/', function($matches) {
 		
-dsm($matches);
+//dsm($matches);
 		$linkFolder = mkdoc_nid_getNodeFolder($matches[1]);
 
 		if($linkFolder === NULL) {
@@ -181,7 +181,7 @@ function mkdoc_nid_getCurrentBookId($viewId) {
 }
 
 function mkdoc_nid_getNodeFolder($mediaName) {
-dsm('-------mkdoc_nid_getNodeId---'.$mediaName);
+//dsm('-------mkdoc_nid_getNodeId---'.$mediaName);
 	
 	$baseFolder = '/files/gdc-docs/gitdata/';
 	$retFolder = "";
@@ -197,7 +197,7 @@ dsm('-------mkdoc_nid_getNodeId---'.$mediaName);
 
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
-			dsm($datamk);
+			//dsm($datamk);
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 			$bookFolder = $datamk->bookFolder;
@@ -244,7 +244,7 @@ dsm('-------mkdoc_nid_getNodeId---'.$mediaName);
 
 
 function mkdoc_nid_getNodeId($mdName) {
-dsm('-------mkdoc_nid_getNodeId---'.$mdName);
+//dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 	$viewNid = mkdoc_nid_getCurrentNodeId(); 
 	//dsm('-------viewId---'.$viewNid);
 	if(is_numeric($viewNid)) {
@@ -257,7 +257,7 @@ dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
-			dsm($datamk);
+			//dsm($datamk);
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 
@@ -277,7 +277,9 @@ dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 				//dsm($folder);
 				if($folder != '') {
 
-					return $linkNames[$folder.'/'.$mdName]->nodeId;
+					if(array_key_exists($folder.'/'.$mdName, $linkNames)) {
+						return $linkNames[$folder.'/'.$mdName]->nodeId;
+					}
 				} else {
 					return $linkNames[$mdName]->nodeId;	
 				}
@@ -298,7 +300,9 @@ dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 				}
 			}
 
-			return $linkNames[$mdName]->nodeId;
+			if(array_key_exists($mdName, $linkNames)) {
+				return $linkNames[$mdName]->nodeId;
+			}
 		}
 	}
 
