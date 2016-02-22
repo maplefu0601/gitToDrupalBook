@@ -140,7 +140,7 @@ function mkdoc_nid_convertDocuments($text) {
 		if($linkFolder === NULL) {
 			$output = $matches[1];	
 		} else {
-			$output = '<object width="100%" type="application/'.$matches[2].'" data="'.$linkFolder.'?#zoom=100"><p>'.$matches[1].'</p></object>';
+			$output = '<object width="100%" type="application/'.$matches[2].'" data="'.$linkFolder.'#zoom=100"><p>'.$matches[1].'</p></object>';
 		}
 
 		return $output;
