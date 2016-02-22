@@ -93,6 +93,63 @@ function mkdoc_nid_convertImages($text) {
 	
 }
 
+function mkdoc_nid_convertAudios($text) {
+	
+    return preg_replace_callback('/\((.*\.(mp3|ogg|wav))/', function($matches) {
+		
+
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[0]);
+
+		if($linkFolder === NULL) {
+			$output = $matches[0];	
+		} else {
+			$output = '<audio width="100%" <source type="audio/'.$matches[1].'" src="'.$linkFolder.'"></source></audio>';
+		}
+
+		return $output;
+		
+	}, $text);
+	
+}
+
+function mkdoc_nid_convertVideos($text) {
+	
+    return preg_replace_callback('/\((.*\.(mp4|mpeg|avi))/', function($matches) {
+		
+
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[0]);
+
+		if($linkFolder === NULL) {
+			$output = $matches[0];	
+		} else {
+			$output = '<video width="100%" <source type="video/'.$matches[1].'" src="'.$linkFolder.'"></source></video>';
+		}
+
+		return $output;
+		
+	}, $text);
+	
+}
+
+function mkdoc_nid_convertDocuments($text) {
+	
+    return preg_replace_callback('/\((.*\.(docx|exls|ppt|pdf))/', function($matches) {
+		
+
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[0]);
+
+		if($linkFolder === NULL) {
+			$output = $matches[0];	
+		} else {
+			$output = '<object type="application/'.$matches[1].'" data="'.$linkFolder.'"><p>'.$matches[0].'</p></object>';
+		}
+
+		return $output;
+		
+	}, $text);
+	
+}
+
 /**
  * Implementation of hook_filter_tips()
  */
