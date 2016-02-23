@@ -28,8 +28,21 @@ function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 			$mdLink = $nodeIds[$viewNid]->mdLink;
-			//dsm($mdLink);
-
+			////dsm($mdLink);
+/*
+			if($node->book) {
+				$parentId = $nodeIds[$viewNid]->parentId;
+				//dsm('parent id='.$parentId);
+				$nodeParent = node_load($parentId);
+				//dsm($nodeParent?$nodeParent:'parent is null');
+				//dsm($parentId);
+				if($nodeParent) {
+					$node->book['plid'] = $nodeParent->book['mlid'];
+					_book_update_outline($node);
+					//dsm($node);		
+				}
+			}
+*/
 			updateMdContent($mdLink, $content, $bookFolder, $gitRepoUrl);
 			break;
 	}
@@ -42,7 +55,7 @@ function updateMdContent($name, $content, $folder, $gitRepoUrl) {
 	$fieldsData = json_encode($data);
 	$header = "Content-type: application/x-www-form-urlencoded\r\n" . "Content-Length: " . strlen($fieldsData) . "\r\n";
 	$response = drupal_http_request($url, $header,'POST', $fieldsData);
-	//dsm($response);
+	////dsm($response);
 
 
 }
@@ -67,8 +80,8 @@ function mkdoc_book_menu()
 function mkdoc_book_new() {
 	//pass the location of the json file, $_POST will have the value
 	//read the json file http://php.net/manual/en/function.json-decode.php
-	//dsm($_SERVER);
-	//dsm($_POST);
+	////dsm($_SERVER);
+	////dsm($_POST);
 	var_dump($_POST);
 	$GLOBALS["dataFolder"] = $_POST["datafolder"]."/docs/";
 
@@ -258,7 +271,7 @@ function mkdoc_book_updateBookContent($bookId, $dataFolder) {
 			$mkdoc = unserialize($data['doc']);
 
 			$linkNames = $mkdoc->pagesByLinkName;
-//dsm($linkNames);
+////dsm($linkNames);
 			foreach($linkNames as $name => $val) {
 				//get md file content
 				//overwrite page content with node id
@@ -356,12 +369,12 @@ function parseObject($bookNodeId, $obj, $parentId) {
 			$saveObj = new stdClass();
 			$saveObj->parentId = $parentId;
 			
-			$parentId = createPageNodeEx($bookNodeId,$parentId, $chapter, $chapter);
-			$saveObj->nodeId = $parentId;
+			$newNodeId = createPageNodeEx($bookNodeId,$parentId, $chapter, $chapter);
+			$saveObj->nodeId = $newNodeId;
 			$saveObj->title = $chapter;
-			$mkdoc->savePageByNodeId($parentId, $saveObj);
+			$mkdoc->savePageByNodeId($newNodeId, $saveObj);
 
-			parseObject($bookNodeId, $chapterValue, $parentId);	
+			parseObject($bookNodeId, $chapterValue, $newNodeId);	
 		} else {
 
 			$attr = is_object($chapterValue) ? get_object_vars($chapterValue) : $chapterValue;
@@ -475,8 +488,10 @@ function createPageNodeEx($bookId, $parentId, $title, $content) {
 	$node->body = $content; 
 	$node->type = 'page'; 
 	if($parentId !== NULL) {
-		$node->parent = $parentId;
-		$node->book['plid'] = $parentId;
+		//$nodeParent = node_load($parentId);
+		//$node->book['plid'] = $nodeParent->book['mlid'];
+		//$node->parent = $parentId;
+		//$node->book['plid'] = $parentId;
 	}
 	$node->created = time(); 
 	$node->changed = $node->created; 
@@ -497,11 +512,14 @@ function createPageNodeEx($bookId, $parentId, $title, $content) {
 	node_save($node);
 	echo "----------------".$node->nid;
 	if($parentId !== NULL) {
-		$node->parent = $parentId;
-		$node->book['plid'] = $parentId;
-		$node->book['mlid'] = $parentId;
+		//$node->parent = $parentId;
+		//$nodeParent = node_load($parentId);
+		//$node->book['plid'] = $nodeParent->book['mlid'];
+		//$node->book['mlid'] = $parentId;
+		//node_save($node);
+		//_book_update_outline($node);
 	}
-	echo 'return book update#######'._book_update_outline($note);
+	//echo 'return book update#######'._book_update_outline($node);
 
 	return $node->nid;
 
@@ -540,7 +558,15 @@ function createPageNode($bookId, $parentId, $title, $fileName, $fileNameWithFold
 
 	node_save($node);
 	echo "----------------".$node->nid;
-
+/*	if($parentId !== NULL) {
+		$node->parent = $parentId;
+		$nodeParent = node_load($parentId);
+		$node->book['plid'] = $nodeParent->book['mlid'];
+		//$node->book['mlid'] = $parentId;
+		node_save($node);
+		_book_update_outline($node);
+	}
+*/
 	return $node->nid;
 
 }

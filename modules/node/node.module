@@ -835,6 +835,8 @@ function node_submit($node) {
 
   // Convert the node to an object, if necessary.
   $node = (object)$node;
+dsm('node_submit');
+dsm($node);
 
   // Generate the teaser, but only if it hasn't been set (e.g. by a
   // module-provided 'teaser' form item).
@@ -866,6 +868,8 @@ function node_submit($node) {
   $node->created = !empty($node->date) ? strtotime($node->date) : time();
   $node->validated = TRUE;
 
+dsm('after submit');
+dsm($node);
   return $node;
 }
 
@@ -876,7 +880,8 @@ function node_save(&$node) {
   // Let modules modify the node before it is saved to the database.
   node_invoke_nodeapi($node, 'presave');
   global $user;
-
+dsm('node_save');
+dsm($node);
   // Insert a new node.
   $node->is_new = empty($node->nid);
 
@@ -945,6 +950,9 @@ function node_save(&$node) {
 
   // Update the node access table for this node.
   node_access_acquire_grants($node);
+
+dsm('after node_save');
+dsm($node);
 
   // Clear the page and block caches.
   cache_clear_all();

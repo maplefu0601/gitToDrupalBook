@@ -164,8 +164,8 @@ function book_remove_button_submit($form, &$form_state) {
  */
 function book_outline_form_submit($form, &$form_state) {
   $node = $form['#node'];
-  dsm('form submit====');
-  dsm($node);
+  //dsm('form submit====');
+  //dsm($node);
   $form_state['redirect'] = "node/". $node->nid;
   $book_link = $form_state['values']['book'];
   if (!$book_link['bid']) {
@@ -173,12 +173,14 @@ function book_outline_form_submit($form, &$form_state) {
     return;
   }
 
+//dsm($book_link['bid']);
+
   $book_link['menu_name'] = book_menu_name($book_link['bid']);
   $node->book = $book_link;
-  dsm('book_link: ');
-  dsm($book_link);
-  dsm('note before submit:');
-  dsm($node);
+  //dsm('book_link: ');
+  //dsm($book_link);
+  //dsm('note before submit:');
+  //dsm($node);
 
   if (_book_update_outline($node)) {
     if ($node->book['parent_mismatch']) {

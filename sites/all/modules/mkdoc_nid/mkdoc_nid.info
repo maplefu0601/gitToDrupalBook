@@ -1,6 +1,6 @@
 name = "mkdoc filter"
 description = "Module providing replacing md link to node id link"
-package = "Other"
+package = "gdc"
 core = 6.x
 
 
