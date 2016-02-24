@@ -21,17 +21,17 @@ print 'please give "Raymond_Fu" access to your bitbucket.org project';
 			$header = "Content-type: application/x-www-form-urlencoded\r\n" . "Content-Length: " . strlen($fieldsData) . "\r\n";
 			//$response = drupal_http_request($url, $header,'POST', $fieldsData);
 			$response = drupal_http_request($url.'?gitRepoUrl='.$gitRepoUrl, $header,'GET');
-			dsm($response);
+			//dsm($response);
 			print nl2br("\n\nPlease add '".$url."?gitRepoUrl=".$gitRepoUrl."' to your git webhook. \n\n");
 
 		}
 		
 		//dsm('================creating new book=======');
-		dsm($node);
-		dsm($node->field_git_repo_url[0]['value']);
+		//dsm($node);
+		//dsm($node->field_git_repo_url[0]['value']);
 		//$repo = 'git@bitbucket.org:jyamada/col.git';
 		$repo = $node->field_git_repo_url[0]['value'];//'git@bitbucket.org:Raymond_Fu/docFromJson.git';
-		dsm($repo);
+		//dsm($repo);
 		createNewMkdocBook($repo);
 		//dsm('end============new book====='); 
 	?></span>
