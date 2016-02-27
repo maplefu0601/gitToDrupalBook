@@ -149,7 +149,7 @@ function mkdoc_book_rebuildFile($yamlObj, $bookId, $mkdoc) {
 
 	$yamlContent = json_encode($yamlObj);
 	dsm(yamlContent);
-	//mkdoc_book_updateBook($yamlContent, $bookFolder, $gitRepoUrl);
+	mkdoc_book_updateBook($yamlContent, $bookFolder, $gitRepoUrl);
 }
 
 function mkdoc_book_rebuildFileImp($yamlObj, $mkdoc) {
@@ -184,7 +184,8 @@ dsm('current folder---'.$currentFolder);
 		if($obj['below']) {
 			//dsm($obj['link']);
 			if($obj['link']['plid'] == 0) {
-				$dataRet = mkdoc_book_fetchBookObject($obj['below'], $dataRet, $nodeIds, $bookFolder, $currentFolder, $newDoc);	
+				$dataRet['site_name'] = $obj['link']['title'];
+				$dataRet['pages'] = array(mkdoc_book_fetchBookObject($obj['below'], $dataRet['pages'], $nodeIds, $bookFolder, $currentFolder, $newDoc));	
 			} else {
 				//dsm($obj['link']['title']);
 				$chapter = $obj['link']['title'];
@@ -197,14 +198,14 @@ dsm('current folder---'.$currentFolder);
 				$title = $obj['link']['title'];
 				$dataRet[$title] = array();
 				$nodeId = substr($obj['link']['link_path'], strpos($obj['link']['link_path'], '/') + 1);
-				$newData = array();
-				$newData['nodeId'] = $nodeId;
-				$newData['parentId'] = $nodeIds[$nodeId]->parentId;
-				$newData['title'] = $title;
-				$newData['mdLink'] = $nodeIds[$nodeId]->mdLink;
+				$newData = new stdClass();
+				$newData->nodeId = $nodeId;
+				$newData->parentId = $nodeIds[$nodeId]->parentId;
+				$newData->title = $title;
+				$newData->mdLink = $nodeIds[$nodeId]->mdLink;
 				$newDoc['pagesByNodeId'][$nodeId] = $newData;
 				$newDoc['pagesByLinkName'][$title] = $newData;
-				$dataRet[$title] = mkdoc_book_fetchBookObject($obj['below'], $dataRet[$title], $nodeIds, $bookFolder.$chapter, $currentFolder, $newDoc);	
+				$dataRet[$title] = array(mkdoc_book_fetchBookObject($obj['below'], $dataRet[$title], $nodeIds, $bookFolder.$chapter, $currentFolder, $newDoc));	
 			}
 		} else {
 			
@@ -240,11 +241,11 @@ dsm('current folder---'.$currentFolder);
 					dsm($nameFile.'------'.$linkName.'-----'.$currentFolder);
 					file_put_contents($nameFile, $node->body);
 					
-					$newData = array();
-					$newData['nodeId'] = $nodeId;
-					$newData['parentId'] = $nodeIds[$nodeId]->parentId;
-					$newData['title'] = $title;
-					$newData['mdLink'] = $linkName; 
+					$newData = new stdClass();
+					$newData->nodeId = $nodeId;
+					$newData->parentId = $nodeIds[$nodeId]->parentId;
+					$newData->title = $title;
+					$newData->mdLink = $linkName; 
 					$newDoc['pagesByNodeId'][$nodeId] = $newData;
 					$newDoc['pagesByLinkName'][$linkName] = $newData;
 
@@ -439,6 +440,7 @@ class MkDoc
 		}
 
 		$data = serialize(array($bookId => ($value)));
+		dsm($data);
 		var_dump($data);
 		$query = "insert into {$tableName} values(%d, '%s', '%s', '%s') on duplicate key update doc=values(doc),bookfolder=values(bookfolder),repourl=values(repourl)";
 		$ret = db_query($query, $bookId, serialize($value), $bookFolder, $repoUrl);
@@ -532,7 +534,7 @@ function mkdoc_book_refreshBookContent($bookId, $dataFolder, $yamlName) {
 			mkdoc_book_changeBookTitle($bookId, $bookName);
 			$mkdoc->siteName = $bookName;
 			$yamlPageContent = json_encode($yamlData['pages']);
-			$yamlData = json_decode($yamlPageContent);
+			$yamlData = json_decode($yamlPageContent, true);
 
 			mkdoc_book_removeMkdocObjPages($mkdoc, $yamlData);
 var_dump($mkdoc);
