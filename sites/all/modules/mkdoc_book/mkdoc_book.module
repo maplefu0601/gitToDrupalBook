@@ -113,7 +113,7 @@ function mkdoc_book_getBookOutline($bookId) {
 		$baseFolder = getcwd().'/files/gdc-docs/gitdata/';
 		$bookFolder = $baseFolder.$bookFolder.'/docs/';
 		dsm('current book folder======'.$bookFolder);
-		mkdoc_book_removeAllFiles($bookFolder);
+//		mkdoc_book_removeAllFiles($bookFolder);
 
 		$data = array();
 		$newMkdoc = array('pagesByNodeId' => array(), 'pagesByLinkName' => array());
@@ -191,13 +191,17 @@ dsm('current folder---'.$currentFolder);
 				$chapter = $obj['link']['title'];
 				if(!is_dir($bookFolder.$chapter)) {
 					dsm($bookFolder.$chapter);
-					mkdir($bookFolder.$chapter, 0755, true);	
+					//mkdir($bookFolder.$chapter, 0755, true);	
 				}
 
 				$currentFolder = $chapter.'/';
 				$title = $obj['link']['title'];
 				$dataRet[$title] = array();
 				$nodeId = substr($obj['link']['link_path'], strpos($obj['link']['link_path'], '/') + 1);
+				$nodeObj = $nodeIds[$nodeId];
+				$oldChapter = $nodeObj->title;//substr($nodeObj->mdLink, 0, strrpos($nodeObj->mdLink, '/'));
+				rename($bookFolder.$oldChapter, $bookFolder.$chapter);
+				dsm('rename folder from '.$oldChapter.' to  '.$chapter);
 				$newData = new stdClass();
 				$newData->nodeId = $nodeId;
 				$newData->parentId = $nodeIds[$nodeId]->parentId;
@@ -238,9 +242,14 @@ dsm('current folder---'.$currentFolder);
 					} else {
 						$nameFile = $bookFolder.'/'.$name;	
 					}
+					$bookFolderTmp = substr($bookFolder, 0, strrpos($bookFolder, '/')+1);
+					$oldFile = $bookFolderTmp.$nodeObj->mdLink;
+					//unlink($oldFile);
 					dsm($nameFile.'------'.$linkName.'-----'.$currentFolder);
-					file_put_contents($nameFile, $node->body);
-					
+					//file_put_contents($nameFile, $node->body);
+					dsm('remove file from '.$oldFile.' to  '.$nameFile);
+					rename($oldFile, $nameFile);
+
 					$newData = new stdClass();
 					$newData->nodeId = $nodeId;
 					$newData->parentId = $nodeIds[$nodeId]->parentId;
