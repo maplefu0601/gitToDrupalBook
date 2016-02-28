@@ -8,7 +8,7 @@ $GLOBALS['mapMkdoc'] = array();
 function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 	
 	dsm('6666666666666----'.$op);
-	watchdog('Raymond Fu', $op);
+	//watchdog('Raymond Fu', $op);
 	switch($op) {
 		case 'presave':
 			//dsm($node);
@@ -30,20 +30,7 @@ function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 			$nodeIds = $datamk->pagesByNodeId;
 			$mdLink = $nodeIds[$viewNid]->mdLink;
 			////dsm($mdLink);
-/*
-			if($node->book) {
-				$parentId = $nodeIds[$viewNid]->parentId;
-				//dsm('parent id='.$parentId);
-				$nodeParent = node_load($parentId);
-				//dsm($nodeParent?$nodeParent:'parent is null');
-				//dsm($parentId);
-				if($nodeParent) {
-					$node->book['plid'] = $nodeParent->book['mlid'];
-					_book_update_outline($node);
-					//dsm($node);		
-				}
-			}
-*/
+
 			updateMdContent($mdLink, $content, $bookFolder, $gitRepoUrl);
 			break;
 
@@ -62,10 +49,10 @@ function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 			case 'view':	
 
 				$viewNid = $node->nid;
-				$bookId = $node->book['bid'];
-				if(!$bookId) {
-					break;	
-				}
+				//$bookId = $node->book['bid'];
+				//if(!$bookId) {
+				//	break;	
+				//}
 
 		//		mkdoc_book_getBookOutline($bookId);
 
@@ -73,25 +60,121 @@ function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 	}
 }
 
-function mkdoc_book_form_alter(&$form, $form_state, $form_id) {
+function mkdoc_book_form_node_delete_confirm_alter(&$form, &$form_state) {
+	dsm('=============mkdoc_book_form_node_delete_confirm_alter');
 	dsm($form);
 	dsm($form_state);
-	dsm($form_id);
-	$form['#submit'][] = 'testFormSubmit';
-
-	if(empty($form_state['post'])) {//data submitted already
-		
-		$node = $form['#node'];
-		if($node->nid == $node->book['bid']) {
-		
-			mkdoc_book_getBookOutline($node->nid);
-		}
-	}
+	//$form['actions']['submit']['#submit'][] = 'mkdoc_book_deletePage';
+	//$form['#submit'][] = 'mkdoc_book_deletePage';
+	dsm('=end============mkdoc_book_form_node_delete_confirm_alter');
 }
 
-function testFormSubmit(&$form, $form_state) {
-	dsm('============testFormSubmit');
-	dsm($form);	
+function mkdoc_book_deletePage(&$form, $form_state) {
+	dsm('===========mkdoc_book_deletePage');
+	dsm($form);
+	dsm($form_state);
+	if($form_state['submitted']) {
+		$nodeId = $form_state['values']['nid'];
+		dsm('=======deleting node '.$nodeId);
+		$node = $form['#parameters'][2];
+		$nodeId = $node->nid;
+		$bookId = $node->book['bid'];
+
+		mkdoc_book_deletePageImp($bookId, $nodeId);
+	}
+	dsm('==end=========mkdoc_book_deletePage');
+}
+
+function mkdoc_book_deletePageImp($bookId, $nodeId) {
+	
+	dsm('mkdoc_book_deletePageImp....bookId:'.$bookId.'....nodeId:'.$nodeId);
+	$mkdoc = mkdoc_book_getMkDoc($bookId);
+	dsm($mkdoc);
+	$bookValue = mkdoc_book_getBookFolder($bookId);
+	$bookFolder = $bookValue['bookfolder'];
+	$gitRepoUrl = $bookValue['repourl'];
+
+	$nodeIds = $mkdoc->pagesByNodeId;
+	dsm($nodeIds);
+	if(array_key_exists($nodeId, $nodeIds)) {
+		$mdName = $nodeIds[$nodeId]->mdLink;
+
+		$baseFolder = getcwd().'/files/gdc-docs/gitdata/';
+		$fileName = $baseFolder.$bookFolder.'/docs/'.$mdName;
+
+		dsm('deleteing '.$fileName);
+		if(file_exists($fileName)) {
+			unlink($fileName);	
+			dsm('deleted '.$fileName);
+		}
+		//remove nodeid from mkdoc, and re-save it
+		unset($nodeIds[$nodeId]);
+
+		$linkNames = $mkdoc->pagesByLinkName;
+		if(array_key_exists($mdName, $linkNames)) {
+			unset($linkNames[$mdName]);	
+		}
+
+		$mkdoc->pagesByNodeId = $nodeIds;
+		$mkdoc->pagesByLinkName = $linkNames;
+
+		$mkDoc = MkDoc::getInstance();
+		$mkDoc->setMkdocsToDb($bookId, $mkdoc, $bookFolder, $gitRepoUrl);
+
+		mkdoc_book_getBookOutline($bookId);
+	}
+
+	
+}
+
+function mkdoc_book_changePageOutline(&$form, $form_state) {
+	dsm('===========mkdoc_book_changePageOutline');
+	dsm($form);
+	dsm($form_state);
+	if($form_state['submitted']) {
+		$nodeBook = $form_state['values']['book'];
+		dsm('=======changing page node '.$nodeBook['bid']);
+		$bookId = $nodeBook['bid'];
+		mkdoc_book_getBookOutline($bookId);
+	}
+	dsm('==end=========mkdoc_book_changePageOutline');
+}
+
+function mkdoc_book_changeBook(&$form, $form_state) {
+	dsm('===========mkdoc_book_changeBook');
+	dsm($form);
+	dsm($form_state);
+	if($form_state['submitted']) {
+		$nodeBook = $form['#node']->book;
+		dsm('=======changing page node '.$nodeBook['bid']);
+		mkdoc_book_getBookOutline($nodeBook['bid']);
+	}
+	dsm('==end=========mkdoc_book_changeBook');
+}
+
+function mkdoc_book_form_alter(&$form, $form_state, $form_id) {
+	dsm('============mkdoc_book_form_alter');
+	dsm($form);
+	dsm($form_state);
+	dsm('======form id: '.$form_id);
+
+	switch($form_id) {
+		case 'book_outline_form':
+			$form['#submit'][] = 'mkdoc_book_changePageOutline';
+			break;
+
+		case 'node_delete_confirm':
+			$form['#submit'][] = 'mkdoc_book_deletePage';
+			//$form['actions']['submit']['#submit'][] = 'mkdoc_book_deletePage';
+			//$form['actions']['submit']['#submit'][] = 'node_delete_confirm_submit';
+			break;
+
+		case 'book_admin_edit':
+			$form['#submit'][] = 'mkdoc_book_changeBook';
+			break;
+	}
+
+
 }
 
 function mkdoc_book_getBookOutline($bookId) {
@@ -117,7 +200,7 @@ function mkdoc_book_getBookOutline($bookId) {
 
 		$data = array();
 		$newMkdoc = array('pagesByNodeId' => array(), 'pagesByLinkName' => array());
-		$ret = mkdoc_book_fetchBookObject($bookStru, $data, $datamk->pagesByNodeId, $bookFolder, '', $newMkdoc);
+		$ret = mkdoc_book_fetchBookObject(0, $bookStru, $data, $datamk->pagesByNodeId, $bookFolder, '', $newMkdoc);
 		//dsm($data);
 		dsm($ret);
 		dsm(json_encode($ret));
@@ -136,6 +219,23 @@ function mkdoc_book_getBookOutline($bookId) {
 
 }
 
+function mkdoc_book_setMkDoc($bookId, $mkdata) {
+	$bookValue = mkdoc_book_getBookFolder($bookId);
+	$bookFolder = $bookValue['bookfolder'];
+	$gitRepoUrl = $bookValue['repourl'];
+	
+	$mkdoc = MkDoc::getInstance();
+	$mkdoc->setMkdocsToDb($bookId, $mkdata, $bookFolder, $gitRepoUrl);
+	
+}
+
+function mkdoc_book_getMkDoc($bookId) {
+	$mkdoc = MkDoc::getInstance();
+	$datamk = $mkdoc->getMkdocsFromDb($bookId);
+	
+	return $datamk;
+}
+
 //reconstruct the files based on book outline
 //files maybe removed or moved
 function mkdoc_book_rebuildFile($yamlObj, $bookId, $mkdoc) {
@@ -148,7 +248,7 @@ function mkdoc_book_rebuildFile($yamlObj, $bookId, $mkdoc) {
 	mkdoc_book_rebuildFileImp($yamlObj, $mkdoc);
 
 	$yamlContent = json_encode($yamlObj);
-	dsm(yamlContent);
+	dsm($yamlContent);
 	mkdoc_book_updateBook($yamlContent, $bookFolder, $gitRepoUrl);
 }
 
@@ -172,7 +272,7 @@ function mkdoc_book_removeAllFiles($folder) {
 
 }
 
-function mkdoc_book_fetchBookObject($bookStructure, &$dataRet, $nodeIds, $bookFolder, $currentFolder, &$newDoc) {
+function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeIds, $bookFolder, $currentFolder, &$newDoc) {
 dsm($bookStructure);
 dsm($nodeIds);
 dsm('current folder---'.$currentFolder);
@@ -184,8 +284,9 @@ dsm('current folder---'.$currentFolder);
 		if($obj['below']) {
 			//dsm($obj['link']);
 			if($obj['link']['plid'] == 0) {
+				$nodeId = substr($obj['link']['link_path'], strpos($obj['link']['link_path'], '/') + 1);
 				$dataRet['site_name'] = $obj['link']['title'];
-				$dataRet['pages'] = array(mkdoc_book_fetchBookObject($obj['below'], $dataRet['pages'], $nodeIds, $bookFolder, $currentFolder, $newDoc));	
+				$dataRet['pages'] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet['pages'], $nodeIds, $bookFolder, $currentFolder, $newDoc));	
 			} else {
 				//dsm($obj['link']['title']);
 				$chapter = $obj['link']['title'];
@@ -198,10 +299,15 @@ dsm('current folder---'.$currentFolder);
 				$title = $obj['link']['title'];
 				$dataRet[$title] = array();
 				$nodeId = substr($obj['link']['link_path'], strpos($obj['link']['link_path'], '/') + 1);
-				$nodeObj = $nodeIds[$nodeId];
-				$oldChapter = $nodeObj->title;//substr($nodeObj->mdLink, 0, strrpos($nodeObj->mdLink, '/'));
-				rename($bookFolder.$oldChapter, $bookFolder.$chapter);
-				dsm('rename folder from '.$oldChapter.' to  '.$chapter);
+				if(array_key_exists($nodeId, $nodeIds)) {
+					$nodeObj = $nodeIds[$nodeId];
+					$oldChapter = $nodeObj->title;//substr($nodeObj->mdLink, 0, strrpos($nodeObj->mdLink, '/'));
+					rename($bookFolder.$oldChapter, $bookFolder.$chapter);
+					dsm('rename folder from '.$oldChapter.' to  '.$chapter);
+				} else {
+					mkdir($bookFolder.$chapter, 0755, true);
+					dsm('created new folder '.$bookFolder.$chapter);
+				}
 				$newData = new stdClass();
 				$newData->nodeId = $nodeId;
 				$newData->parentId = $nodeIds[$nodeId]->parentId;
@@ -209,7 +315,7 @@ dsm('current folder---'.$currentFolder);
 				$newData->mdLink = $nodeIds[$nodeId]->mdLink;
 				$newDoc['pagesByNodeId'][$nodeId] = $newData;
 				$newDoc['pagesByLinkName'][$title] = $newData;
-				$dataRet[$title] = array(mkdoc_book_fetchBookObject($obj['below'], $dataRet[$title], $nodeIds, $bookFolder.$chapter, $currentFolder, $newDoc));	
+				$dataRet[$title] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet[$title], $nodeIds, $bookFolder.$chapter, $currentFolder, $newDoc));	
 			}
 		} else {
 			
@@ -221,38 +327,46 @@ dsm('current folder---'.$currentFolder);
 				dsm($nodeIds);
 				if($nodeId) {
 					
-					$nodeObj = $nodeIds[$nodeId];
 					$node = node_load($nodeId);
-					dsm($node);
-					dsm($nodeObj->mdLink);
-					$linkName = $nodeObj->mdLink;
-					if(strrpos($nodeObj->mdLink, '/')) {
-						$name = substr($nodeObj->mdLink, strrpos($nodeObj->mdLink, '/') +1);
-						$dataRet[$title] = $currentFolder.$name;
-						$linkName = $currentFolder.$name;
+					if(array_key_exists($nodeId, $nodeIds)) {
+						$nodeObj = $nodeIds[$nodeId];
+						dsm($node);
+						dsm($nodeObj->mdLink);
+						$linkName = $nodeObj->mdLink;
+						if(strrpos($nodeObj->mdLink, '/')) {
+							$name = substr($nodeObj->mdLink, strrpos($nodeObj->mdLink, '/') +1);
+							$dataRet[$title] = $currentFolder.$name;
+							$linkName = $currentFolder.$name;
+						} else {
+							$name = $nodeObj->mdLink;	
+							$dataRet[$title] = $name;
+							$linkName = $name;
+						}
+						
+						$nameFile = $name;
+						if($bookFolder[strlen($bookFolder)-1] == '/') {
+							$nameFile = $bookFolder.$name;
+						} else {
+							$nameFile = $bookFolder.'/'.$name;	
+						}
+						$bookFolderTmp = substr($bookFolder, 0, strrpos($bookFolder, '/')+1);
+						$oldFile = $bookFolderTmp.$nodeObj->mdLink;
+						//unlink($oldFile);
+						dsm($nameFile.'------'.$linkName.'-----'.$currentFolder);
+						//file_put_contents($nameFile, $node->body);
+						dsm('remove file from '.$oldFile.' to  '.$nameFile);
+						rename($oldFile, $nameFile);
 					} else {
-						$name = $nodeObj->mdLink;	
-						$dataRet[$title] = $name;
-						$linkName = $name;
+						$linkName = strtolower(str_replace(' ', '-', $title)).'.md';
+						$newFile = $bookFolder.'/'.$linkName;
+						$linkName = $currentFolder.$linkName;
+						dsm('creating new file '.$newFile);
+						file_put_contents($newFile, $node->body);
+						$dataRet[$title] = $linkName;
 					}
-					
-					$nameFile = $name;
-					if($bookFolder[strlen($bookFolder)-1] == '/') {
-						$nameFile = $bookFolder.$name;
-					} else {
-						$nameFile = $bookFolder.'/'.$name;	
-					}
-					$bookFolderTmp = substr($bookFolder, 0, strrpos($bookFolder, '/')+1);
-					$oldFile = $bookFolderTmp.$nodeObj->mdLink;
-					//unlink($oldFile);
-					dsm($nameFile.'------'.$linkName.'-----'.$currentFolder);
-					//file_put_contents($nameFile, $node->body);
-					dsm('remove file from '.$oldFile.' to  '.$nameFile);
-					rename($oldFile, $nameFile);
-
 					$newData = new stdClass();
 					$newData->nodeId = $nodeId;
-					$newData->parentId = $nodeIds[$nodeId]->parentId;
+					$newData->parentId = $parentId;//$nodeIds[$nodeId]->parentId;
 					$newData->title = $title;
 					$newData->mdLink = $linkName; 
 					$newDoc['pagesByNodeId'][$nodeId] = $newData;
@@ -275,7 +389,7 @@ function mkdoc_book_updateBook($yamlContent, $folder, $gitRepoUrl) {
 	$fieldsData = json_encode($data);
 	$header = "Content-type: application/x-www-form-urlencoded\r\n" . "Content-Length: " . strlen($fieldsData) . "\r\n";
 	$response = drupal_http_request($url, $header,'POST', $fieldsData);
-	//dsm($response);
+	dsm($response);
 
 
 }
@@ -310,9 +424,6 @@ function mkdoc_book_menu()
 
 function mkdoc_book_new() {
 	//pass the location of the json file, $_POST will have the value
-	//read the json file http://php.net/manual/en/function.json-decode.php
-	////dsm($_SERVER);
-	////dsm($_POST);
 	var_dump($_POST);
 	$GLOBALS["dataFolder"] = $_POST["datafolder"]."/docs/";
 
@@ -409,7 +520,7 @@ class MkDoc
 	}
 
 	public function savePageByNodeId($nodeId, $value) {
-		var_dump( 'save node id:--------'.$nodeId.'--------'.$value);
+		//var_dump( 'save node id:--------'.$nodeId.'--------'.$value);
 		$this->pagesByNodeId[$nodeId] = $value;
 	}
 
@@ -418,7 +529,7 @@ class MkDoc
 	}
 
 	public function savePageByLinkName($name, $value) {
-		var_dump( '======save link name:'.$name.'---'.$value);
+		//var_dump( '======save link name:'.$name.'---'.$value);
 		$this->pagesByLinkName[$name] = $value;
 	}
 
@@ -811,7 +922,7 @@ echo "----------------CHAPTER---".$chapter."----------------".is_array($chapterV
 			$attr = is_object($chapterValue) ? get_object_vars($chapterValue) : $chapterValue;
 
 			foreach($attr as $key => $val) {
-				var_dump($key.'------'.$val.'-------is md link:'.isMdLink($val));
+				var_dump($key.'-------------is md link:'.isMdLink($val));
 				
 				if(is_array($val)) {
 					$saveObj = new stdClass();
