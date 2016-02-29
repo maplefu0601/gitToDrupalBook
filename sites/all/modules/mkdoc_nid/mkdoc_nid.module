@@ -76,7 +76,7 @@ function mkdoc_nid_convertMdLinks($text) {
 //using ---- \[\!\[(.*?)\]\((.*\.(png))\).* \"(.*)\"\) 
 function mkdoc_nid_convertImages($text) {
 	
-    return preg_replace_callback('/\[\!\[(.*?)\]\((.*\.(png))\).* \"(.*)\"\)/', function($matches) {
+    return preg_replace_callback('/\[\!\[(.*?)\]\((.*\.(png|jpg|jpeg|gif|tif|bmp))\).* \"(.*)\"\)/', function($matches) {
 		
 //dsm($matches);
 		$linkFolder = mkdoc_nid_getNodeFolder($matches[2]);
