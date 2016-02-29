@@ -7,7 +7,7 @@ $GLOBALS['mapMkdoc'] = array();
 
 function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 	
-	dsm('6666666666666----'.$op);
+	//dsm('6666666666666----'.$op);
 	//watchdog('Raymond Fu', $op);
 	switch($op) {
 		case 'presave':
@@ -764,9 +764,15 @@ var_dump( "----------------CHAPTER---".$chapter."----------------".is_array($cha
 
 					if(array_key_exists($chapterValue, $linkNames)) {
 						$nodeId = $linkNames[$chapterValue]->nodeId;
-						refreshPageNode($nodeId, $parentId, $chapter, $chapterValue, $folder);	
+						$parentId1 = $linkNames[$chapterValue]->parentId;
+						refreshPageNode($nodeId, $parentId1, $chapter, $chapterValue, $folder);	
 					} else {
-						$nodeId = createPageNode($bookNodeId, $parentId, $chapter, $chapterValue, $folder);	
+						if(strrpos($chapterValue, '/') == FALSE) {
+							$parentId1 = $bookNodeId;	
+						} else {
+							$parentId1 = $parentId;	
+						}
+						$nodeId = createPageNode($bookNodeId, $parentId1, $chapter, $chapterValue, $folder);	
 					}
 
 				} else {
