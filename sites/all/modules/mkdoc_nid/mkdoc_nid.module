@@ -55,17 +55,17 @@ function mkdoc_nid_convertion($text) {
 	return $text;
 	
 }
-
+//using ----- \[(.*)\]\((.*\.(md))
 function mkdoc_nid_convertMdLinks($text) {
 	
-    return preg_replace_callback('/\(([^(]*\.md)\)/', function($matches) {
-		
-		$nid = mkdoc_nid_getNodeId($matches[1]);
+    return preg_replace_callback('/\[(.*)\]\(([^(]*\.md)\)/', function($matches) {
+//dsm($matches);		
+		$nid = mkdoc_nid_getNodeId($matches[2]);
 
 		if($nid === NULL) {
 			$output = $matches[0];	
 		} else {
-			$output = '<a href="'.$nid.'">'.$matches[0].'</a>';
+			$output = '<a href="'.$nid.'">'.$matches[1].'</a>';
 		}
 
 		return $output;
@@ -73,18 +73,18 @@ function mkdoc_nid_convertMdLinks($text) {
 	}, $text);
 	
 }
-
+//using ---- \[\!\[(.*?)\]\((.*\.(png))\).* \"(.*)\"\) 
 function mkdoc_nid_convertImages($text) {
 	
-    return preg_replace_callback('/\((.*\.(bmp|jpeg|jpg|gif|tif))\)/', function($matches) {
+    return preg_replace_callback('/\[\!\[(.*?)\]\((.*\.(png))\).* \"(.*)\"\)/', function($matches) {
 		
-////dsm($matches);
-		$linkFolder = mkdoc_nid_getNodeFolder($matches[1]);
-
+//dsm($matches);
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[2]);
+//dsm($linkFolder);
 		if($linkFolder === NULL) {
-			$output = $matches[1];	
+			$output = $matches[2];	
 		} else {
-			$output = '<img src="'.$linkFolder.'" alt="'.$matches[1].'">';
+			$output = '<p><a href="'.$linkFolder.'" title="'.$matches[4].'"><img src="'.$linkFolder.'" alt="'.$matches[1].'"/></a></p>';
 		}
 
 		return $output;
@@ -181,12 +181,12 @@ function mkdoc_nid_getCurrentBookId($viewId) {
 }
 
 function mkdoc_nid_getNodeFolder($mediaName) {
-////dsm('-------mkdoc_nid_getNodeId---'.$mediaName);
+//dsm('-------mkdoc_nid_getNodeId---'.$mediaName);
 	
 	$baseFolder = '/files/gdc-docs/gitdata/';
 	$retFolder = "";
 	$viewNid = mkdoc_nid_getCurrentNodeId(); 
-	////dsm('-------viewId---'.$viewNid);
+	//dsm('-------viewId---'.$viewNid);
 	if(is_numeric($viewNid)) {
 		$bookId = mkdoc_nid_getCurrentBookId($viewNid);
 		////dsm('-------bookid----'.$bookId);
@@ -197,11 +197,11 @@ function mkdoc_nid_getNodeFolder($mediaName) {
 
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
-			////dsm($datamk);
+			//dsm($datamk);
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 			$bookFolder = $datamk->bookFolder;
-
+			//dsm($linkNames);
 			$retFolder = $baseFolder.$bookFolder.'/docs/';
 
 			//$GLOBALS['mkdocLinkNames-'.$bookId] = $linkNames;
@@ -210,13 +210,13 @@ function mkdoc_nid_getNodeFolder($mediaName) {
 			////dsm($linkNames[$mdName]);
 			////dsm($linkNames[$mdName]->nodeId);
 
-			$pos = strpos($mediaName, '/');
+			$pos = strrpos($mediaName, '/');
 			if($pos === false || $mediaName[0] !== '/') {//media file name only or is root folder
 
 				////dsm('=======no subfolder in md link=======');
 				$mdLink = $nodeIds[$viewNid]->mdLink;
 				////dsm($mdLink);
-				$folder = substr($mdLink, 0, strpos($mdLink, '/'));
+				$folder = substr($mdLink, 0, strrpos($mdLink, '/'));
 				////dsm($folder);
 				if($folder != '') {
 
@@ -244,7 +244,7 @@ function mkdoc_nid_getNodeFolder($mediaName) {
 
 
 function mkdoc_nid_getNodeId($mdName) {
-////dsm('-------mkdoc_nid_getNodeId---'.$mdName);
+//dsm('-------mkdoc_nid_getNodeId---'.$mdName);
 	$viewNid = mkdoc_nid_getCurrentNodeId(); 
 	////dsm('-------viewId---'.$viewNid);
 	if(is_numeric($viewNid)) {
@@ -260,7 +260,7 @@ function mkdoc_nid_getNodeId($mdName) {
 			////dsm($datamk);
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
-
+			//dsm($linkNames);
 			$node = node_load($viewNid);
             if($node->book) {
                 $parentId = $nodeIds[$viewNid]->parentId;
@@ -281,13 +281,13 @@ function mkdoc_nid_getNodeId($mdName) {
 			////dsm($linkNames[$mdName]);
 			////dsm($linkNames[$mdName]->nodeId);
 
-			$pos = strpos($mdName, '/');
+			$pos = strrpos($mdName, '/');
 			if($pos === false) {//md file name only
 
 				////dsm('=======no subfolder in md link=======');
 				$mdLink = $nodeIds[$viewNid]->mdLink;
 				////dsm($mdLink);
-				$folder = substr($mdLink, 0, strpos($mdLink, '/'));
+				$folder = substr($mdLink, 0, strrpos($mdLink, '/'));
 				////dsm($folder);
 				if($folder != '') {
 
@@ -304,9 +304,13 @@ function mkdoc_nid_getNodeId($mdName) {
 					
 				$mdLink = $nodeIds[$viewNid]->mdLink;
 				////dsm($mdLink);
-				$folder = substr($mdLink, 0, strpos($mdLink, '/'));
+				$folder = substr($mdLink, 0, strrpos($mdLink, '/'));
 				////dsm($folder);
 				if($folder != '') {
+
+					//dsm($linkNames);
+					//dsm($mdName);
+					//dsm($folder.'/'.$mdName);
 
 					return $linkNames[$folder.'/'.$mdName]->nodeId;
 				} else {
