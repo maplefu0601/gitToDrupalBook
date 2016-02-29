@@ -29,9 +29,13 @@ function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 			$mdLink = $nodeIds[$viewNid]->mdLink;
-			////dsm($mdLink);
+			//dsm($nodeIds);
+			//dsm($mdLink);
+			//dsm($viewNid.'======>'.$mdLink);
 
-			updateMdContent($mdLink, $content, $bookFolder, $gitRepoUrl);
+			if(is_string($mdLink)) {
+				updateMdContent($mdLink, $content, $bookFolder, $gitRepoUrl);
+			}
 			break;
 
 			case 'update':	//update the content of page
@@ -313,8 +317,10 @@ function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeI
 				if(array_key_exists($nodeId, $nodeIds)) {
 					$nodeObj = $nodeIds[$nodeId];
 					$oldChapter = $nodeObj->title;//substr($nodeObj->mdLink, 0, strrpos($nodeObj->mdLink, '/'));
-					rename($bookFolder.$oldChapter, $bookFolder.$chapter);
-					//dsm('rename folder from '.$oldChapter.' to  '.$chapter);
+					if(file_exists($bookFolder.$oldChapter)) {
+						rename($bookFolder.$oldChapter, $bookFolder.$chapter);
+					}
+					//dsm('renamed folder from '.$oldChapter.' to  '.$chapter);
 				} else {
 					mkdir($bookFolder.$chapter, 0755, true);
 					//dsm('created new folder '.$bookFolder.$chapter);
@@ -366,7 +372,9 @@ function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeI
 						//dsm($nameFile.'------'.$linkName.'-----'.$currentFolder);
 						////file_put_contents($nameFile, $node->body);
 						//dsm('remove file from '.$oldFile.' to  '.$nameFile);
-						rename($oldFile, $nameFile);
+						if(file_exists($oldFile)) {
+							rename($oldFile, $nameFile);
+						}
 					} else {
 						$linkName = strtolower(str_replace(' ', '-', $title)).'.md';
 						$newFile = $bookFolder.'/'.$linkName;
@@ -406,6 +414,9 @@ function mkdoc_book_updateBook($yamlContent, $folder, $gitRepoUrl) {
 }
 
 function updateMdContent($name, $content, $folder, $gitRepoUrl) {
+	if(empty($name)) {
+		return;	
+	}
 	$url = 'http://54.69.251.157:6600/updateMdContent';
 	$data = array('name' => $name, 'content' => $content, 'folder' => $folder, 'repourl' => $gitRepoUrl);
 	$fieldsData = json_encode($data);
