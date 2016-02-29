@@ -55,11 +55,15 @@ function mkdoc_nid_convertion($text) {
 	return $text;
 	
 }
+//\[(.*?)\]\((.*?)\)
 //using ----- \[(.*)\]\((.*\.(md))
 function mkdoc_nid_convertMdLinks($text) {
 	
-    return preg_replace_callback('/\[(.*)\]\(([^(]*\.md)\)/', function($matches) {
+    return preg_replace_callback('/\[(.*?)\]\((.*?)\)/', function($matches) {
 //dsm($matches);		
+		if(strpos($matches[2], '.md') == FALSE) {
+			return $matches[0];	
+		}
 		$nid = mkdoc_nid_getNodeId($matches[2]);
 
 		if($nid === NULL) {
@@ -130,8 +134,26 @@ function mkdoc_nid_convertVideos($text) {
 	}, $text);
 	
 }
-
+//using -------  \[(.*)\]\((.*?.(pdf|doc))\)
 function mkdoc_nid_convertDocuments($text) {
+	
+    return preg_replace_callback('/\[(.*)\]\((.*?.(pdf|doc))\)/', function($matches) {
+		//dsm($matches);
+		$linkFolder = mkdoc_nid_getNodeFolder($matches[2]);
+
+		if($linkFolder === NULL) {
+			$output = $matches[0];	
+		} else {
+			$output = '<a href="'.$linkFolder.'" >'.$matches[1].'</a>';
+		}
+
+		return $output;
+		
+	}, $text);
+	
+}
+
+function mkdoc_nid_convertDocumentsBak($text) {
 	
     return preg_replace_callback('/\((.*\.(docx|exls|ppt|pdf))\)/', function($matches) {
 		
