@@ -77,18 +77,22 @@ function mkdoc_nid_convertMdLinks($text) {
 	}, $text);
 	
 }
-//using ---- \[\!\[(.*?)\]\((.*\.(png))\).* \"(.*)\"\) 
+//using ---- \[\!\[(.*?)\]\((.*\.(png|jpg|jpeg|gif|tif|bmp))\).* \"(.*)\"\) 
 function mkdoc_nid_convertImages($text) {
 	
-    return preg_replace_callback('/\[\!\[(.*?)\]\((.*\.(png|jpg|jpeg|gif|tif|bmp))\).* \"(.*)\"\)/', function($matches) {
+    return preg_replace_callback('/\!\[(.*?)\]\((.*\.(png|jpg|jpeg|gif|tif|bmp))\)[.* \"(.*)\"\)]?/', function($matches) {
 		
 //dsm($matches);
 		$linkFolder = mkdoc_nid_getNodeFolder($matches[2]);
+		$title = $matches[1];
+		if(array_key_exists(4, $matches)) {
+			$title = $matches[4];	
+		}
 //dsm($linkFolder);
 		if($linkFolder === NULL) {
 			$output = $matches[2];	
 		} else {
-			$output = '<p><a href="'.$linkFolder.'" title="'.$matches[4].'"><img src="'.$linkFolder.'" alt="'.$matches[1].'"/></a></p>';
+			$output = '<p><a href="'.$linkFolder.'" title="'.$title.'"><img src="'.$linkFolder.'" alt="'.$matches[1].'"/></a></p>';
 		}
 
 		return $output;

@@ -395,7 +395,7 @@ function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeI
 		}
 	}
 	$currentFolder = $originalFolder;
-	dsm('current folder:'.$currentFolder.'=====return result:'.json_encode($dataRet));	
+	//dsm('current folder:'.$currentFolder.'=====return result:'.json_encode($dataRet));	
 	return $dataRet;
 }
 
