@@ -216,7 +216,7 @@ function mkdoc_book_getBookOutline($bookId) {
 
 		$data = array();
 		$newMkdoc = array('pagesByNodeId' => array(), 'pagesByLinkName' => array());
-		$ret = mkdoc_book_fetchBookObject(0, $bookStru, $data, $datamk->pagesByNodeId, $bookFolder, $bookFolder, '', $newMkdoc);
+		$ret = mkdoc_book_fetchBookObject(0, $bookStru, $data, $datamk->pagesByNodeId, $bookFolder, $bookFolder, '', $newMkdoc, true, array());
 		//dsm($data);
 		//dsm($ret);
 		//dsm(json_encode($ret));
@@ -291,11 +291,11 @@ function mkdoc_book_removeAllFiles($folder) {
 
 }
 
-function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeIds, $baseFolder, $bookFolder, $currentFolder, &$newDoc) {
-dsm($bookStructure);
-dsm($nodeIds);
-dsm('book folder----'.$bookFolder);
-dsm('current folder---'.$currentFolder);
+function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeIds, $baseFolder, $bookFolder, $currentFolder, &$newDoc, $sameChapter, $chapterMap) {
+//dsm($bookStructure);
+//dsm($nodeIds);
+//dsm('book folder----'.$bookFolder);
+//dsm('current folder---'.$currentFolder);
 	$originalFolder = $currentFolder;
 	foreach($bookStructure as $name => $obj) {
 	
@@ -306,7 +306,7 @@ dsm('current folder---'.$currentFolder);
 			if($obj['link']['plid'] == 0) {
 				$nodeId = substr($obj['link']['link_path'], strpos($obj['link']['link_path'], '/') + 1);
 				$dataRet['site_name'] = $obj['link']['title'];
-				$dataRet['pages'] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet['pages'], $nodeIds, $baseFolder, $bookFolder, $currentFolder, $newDoc));	
+				$dataRet['pages'] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet['pages'], $nodeIds, $baseFolder, $bookFolder, $currentFolder, $newDoc, $sameChapter, $chapterMap));	
 			} else {
 				//dsm($obj['link']['title']);
 				$chapter = $obj['link']['title'];
@@ -322,8 +322,12 @@ dsm('current folder---'.$currentFolder);
 				if(array_key_exists($nodeId, $nodeIds)) {
 					$nodeObj = $nodeIds[$nodeId];
 					$oldChapter = $nodeObj->title;//substr($nodeObj->mdLink, 0, strrpos($nodeObj->mdLink, '/'));
-					if(file_exists($bookFolder.$oldChapter)) {
-						rename($bookFolder.$oldChapter, $bookFolder.$chapter);
+					$sameChapter = $oldChapter === $chapter;
+					if(!$sameChapter) {
+						$chapterMap[$oldChapter] = $chapter;
+						if(file_exists($bookFolder.$oldChapter)) {
+							rename($bookFolder.$oldChapter, $bookFolder.$chapter);
+						}
 					}
 					//dsm('renamed folder from '.$oldChapter.' to  '.$chapter);
 				} else {
@@ -337,7 +341,7 @@ dsm('current folder---'.$currentFolder);
 				$newData->mdLink = $nodeIds[$nodeId]->mdLink;
 				$newDoc['pagesByNodeId'][$nodeId] = $newData;
 				$newDoc['pagesByLinkName'][$title] = $newData;
-				$dataRet[$title] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet[$title], $nodeIds, $baseFolder, $bookFolder.$chapter, $currentFolder, $newDoc));	
+				$dataRet[$title] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet[$title], $nodeIds, $baseFolder, $bookFolder.$chapter, $currentFolder, $newDoc, $sameChapter, $chapterMap));	
 			}
 		} else {
 			
@@ -345,46 +349,30 @@ dsm('current folder---'.$currentFolder);
 				
 				$nodeId = substr($obj['link']['link_path'], strpos($obj['link']['link_path'], '/') + 1);
 				$title = $obj['link']['title'];
-				dsm($nodeId);
-				dsm($nodeIds);
+				//dsm($nodeId);
+				//dsm($nodeIds);
 				if($nodeId) {
 					
 					$node = node_load($nodeId);
 					if(array_key_exists($nodeId, $nodeIds)) {
 						$nodeObj = $nodeIds[$nodeId];
-						//dsm($node);
-						//dsm($nodeObj->mdLink);
 						$linkName = $nodeObj->mdLink;
-						//if(strrpos($nodeObj->mdLink, '/')) {
-						//	$name = substr($nodeObj->mdLink, strrpos($nodeObj->mdLink, '/') +1);
-						//	$dataRet[$title] = $currentFolder.$name;
-						//	$linkName = $currentFolder.$name;
-						//} else {
-						//	$name = $nodeObj->mdLink;	
-						//	$dataRet[$title] = $name;
-						//	$linkName = $name;
-						//}
 
 						//if md link exists already, just replace with the new title
-						$dataRet[$title] = $nodeObj->mdLink;
 						$name = $nodeObj->mdLink;
-						dsm($name);
-						$nameFile = $name;
-						if($baseFolder[strlen($baseFolder)-1] == '/') {
-							$nameFile = $baseFolder.$name;
-						} else {
-							$nameFile = $baseFolder.'/'.$name;	
+						$dataRet[$title] = $name;
+
+						if(strpos($name, '/')) {//make sure has parent chapter
+							
+							$chapterFromMdLink = substr($name, 0, strpos($name, '/'));
+							if(array_key_exists($chapterFromMdLink, $chapterMap)) {//chapter changed
+								$name = substr($name, strpos($name, '/'));
+								$linkName = $chapterMap[$chapterFromMdLink].$name;
+								$dataRet[$title] = $linkName;
+								
+							}
 						}
-						dsm($nameFile);
-						$bookFolderTmp = substr($bookFolder, 0, strrpos($bookFolder, '/')+1);
-						$oldFile = $bookFolderTmp.$nodeObj->mdLink;
-						////unlink($oldFile);
-						//dsm($nameFile.'------'.$linkName.'-----'.$currentFolder);
-						////file_put_contents($nameFile, $node->body);
-						dsm('remove file from '.$oldFile.' to  '.$nameFile);
-						if(file_exists($oldFile)) {
-							rename($oldFile, $nameFile);
-						}
+						
 					} else {
 						$linkName = strtolower(str_replace(' ', '-', $title)).'.md';
 						$newFile = $bookFolder.'/'.$linkName;
@@ -407,7 +395,7 @@ dsm('current folder---'.$currentFolder);
 		}
 	}
 	$currentFolder = $originalFolder;
-	//dsm('current folder:'.$currentFolder.'=====return result:'.json_encode($dataRet));	
+	dsm('current folder:'.$currentFolder.'=====return result:'.json_encode($dataRet));	
 	return $dataRet;
 }
 
