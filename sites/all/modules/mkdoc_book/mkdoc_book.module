@@ -12,6 +12,9 @@ function mkdoc_book_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 	switch($op) {
 		case 'presave':
 			//dsm($node);
+			if(!property_exists($node, 'nid')) {
+				break;	
+			}
 			$viewNid = $node->nid;
 			$bookId = mkdoc_nid_getCurrentBookId($viewNid);
 			if(!$bookId) {
@@ -182,6 +185,7 @@ function mkdoc_book_form_alter(&$form, $form_state, $form_id) {
 }
 
 function mkdoc_book_getBookOutline($bookId) {
+	//dsm('rebuilding book==============='.$bookId);
 
 	$nodeBook = node_load($bookId);
 	$menuName = $nodeBook->book['menu_name'];
@@ -212,7 +216,7 @@ function mkdoc_book_getBookOutline($bookId) {
 
 		$data = array();
 		$newMkdoc = array('pagesByNodeId' => array(), 'pagesByLinkName' => array());
-		$ret = mkdoc_book_fetchBookObject(0, $bookStru, $data, $datamk->pagesByNodeId, $bookFolder, '', $newMkdoc);
+		$ret = mkdoc_book_fetchBookObject(0, $bookStru, $data, $datamk->pagesByNodeId, $bookFolder, $bookFolder, '', $newMkdoc);
 		//dsm($data);
 		//dsm($ret);
 		//dsm(json_encode($ret));
@@ -287,10 +291,11 @@ function mkdoc_book_removeAllFiles($folder) {
 
 }
 
-function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeIds, $bookFolder, $currentFolder, &$newDoc) {
-//dsm($bookStructure);
-//dsm($nodeIds);
-//dsm('current folder---'.$currentFolder);
+function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeIds, $baseFolder, $bookFolder, $currentFolder, &$newDoc) {
+dsm($bookStructure);
+dsm($nodeIds);
+dsm('book folder----'.$bookFolder);
+dsm('current folder---'.$currentFolder);
 	$originalFolder = $currentFolder;
 	foreach($bookStructure as $name => $obj) {
 	
@@ -301,7 +306,7 @@ function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeI
 			if($obj['link']['plid'] == 0) {
 				$nodeId = substr($obj['link']['link_path'], strpos($obj['link']['link_path'], '/') + 1);
 				$dataRet['site_name'] = $obj['link']['title'];
-				$dataRet['pages'] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet['pages'], $nodeIds, $bookFolder, $currentFolder, $newDoc));	
+				$dataRet['pages'] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet['pages'], $nodeIds, $baseFolder, $bookFolder, $currentFolder, $newDoc));	
 			} else {
 				//dsm($obj['link']['title']);
 				$chapter = $obj['link']['title'];
@@ -332,7 +337,7 @@ function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeI
 				$newData->mdLink = $nodeIds[$nodeId]->mdLink;
 				$newDoc['pagesByNodeId'][$nodeId] = $newData;
 				$newDoc['pagesByLinkName'][$title] = $newData;
-				$dataRet[$title] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet[$title], $nodeIds, $bookFolder.$chapter, $currentFolder, $newDoc));	
+				$dataRet[$title] = array(mkdoc_book_fetchBookObject($nodeId, $obj['below'], $dataRet[$title], $nodeIds, $baseFolder, $bookFolder.$chapter, $currentFolder, $newDoc));	
 			}
 		} else {
 			
@@ -340,8 +345,8 @@ function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeI
 				
 				$nodeId = substr($obj['link']['link_path'], strpos($obj['link']['link_path'], '/') + 1);
 				$title = $obj['link']['title'];
-				//dsm($nodeId);
-				//dsm($nodeIds);
+				dsm($nodeId);
+				dsm($nodeIds);
 				if($nodeId) {
 					
 					$node = node_load($nodeId);
@@ -350,28 +355,33 @@ function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeI
 						//dsm($node);
 						//dsm($nodeObj->mdLink);
 						$linkName = $nodeObj->mdLink;
-						if(strrpos($nodeObj->mdLink, '/')) {
-							$name = substr($nodeObj->mdLink, strrpos($nodeObj->mdLink, '/') +1);
-							$dataRet[$title] = $currentFolder.$name;
-							$linkName = $currentFolder.$name;
-						} else {
-							$name = $nodeObj->mdLink;	
-							$dataRet[$title] = $name;
-							$linkName = $name;
-						}
-						
+						//if(strrpos($nodeObj->mdLink, '/')) {
+						//	$name = substr($nodeObj->mdLink, strrpos($nodeObj->mdLink, '/') +1);
+						//	$dataRet[$title] = $currentFolder.$name;
+						//	$linkName = $currentFolder.$name;
+						//} else {
+						//	$name = $nodeObj->mdLink;	
+						//	$dataRet[$title] = $name;
+						//	$linkName = $name;
+						//}
+
+						//if md link exists already, just replace with the new title
+						$dataRet[$title] = $nodeObj->mdLink;
+						$name = $nodeObj->mdLink;
+						dsm($name);
 						$nameFile = $name;
-						if($bookFolder[strlen($bookFolder)-1] == '/') {
-							$nameFile = $bookFolder.$name;
+						if($baseFolder[strlen($baseFolder)-1] == '/') {
+							$nameFile = $baseFolder.$name;
 						} else {
-							$nameFile = $bookFolder.'/'.$name;	
+							$nameFile = $baseFolder.'/'.$name;	
 						}
+						dsm($nameFile);
 						$bookFolderTmp = substr($bookFolder, 0, strrpos($bookFolder, '/')+1);
 						$oldFile = $bookFolderTmp.$nodeObj->mdLink;
 						////unlink($oldFile);
 						//dsm($nameFile.'------'.$linkName.'-----'.$currentFolder);
 						////file_put_contents($nameFile, $node->body);
-						//dsm('remove file from '.$oldFile.' to  '.$nameFile);
+						dsm('remove file from '.$oldFile.' to  '.$nameFile);
 						if(file_exists($oldFile)) {
 							rename($oldFile, $nameFile);
 						}
@@ -776,6 +786,240 @@ var_dump( "----------------CHAPTER---".$chapter."----------------".is_array($cha
 					if(array_key_exists($chapterValue, $linkNames)) {
 						$nodeId = $linkNames[$chapterValue]->nodeId;
 						$parentId1 = $linkNames[$chapterValue]->parentId;
+						if(strrpos($chapterValue, '/') == FALSE) {
+							$parentId1 = $bookNodeId;	
+						}
+					
+						var_dump('chapter='.$chapter.' value='.$chapterValue.' nodeId='.$nodeId.' parentId='.$parentId);
+						refreshPageNode($nodeId, $parentId1, $chapter, $chapterValue, $folder);	
+						
+						$nodeObj = $linkNames[$chapterValue];
+						$nodeObj->title = $chapter;
+						$nodeObj->parentId = $parentId1;
+
+						$mkdoc->savePageByNodeId($nodeId, $nodeObj);
+						$mkdoc->savePageByLinkName($chapter, $nodeObj);
+					} else {
+						if(strrpos($chapterValue, '/') == FALSE) {
+							$parentId1 = $bookNodeId;	
+						} else {
+							$parentId1 = $parentId;	
+						}
+						$nodeId = createPageNode($bookNodeId, $parentId1, $chapter, $chapterValue, $folder);
+						$newObj = new stdClass();
+						$newObj->nodeId = $nodeId;
+						$newObj->parentId = $parentId1;
+						$newObj->title = $chapter;
+						$newObj->mdLink = $chapterValue;
+						$mkdoc->savePageByNodeId($nodeId, $newObj);
+						$mkdoc->savePageByLinkName($chapter, $newObj);
+						
+					}
+
+				} else {
+
+					$linkNames = $mkdoc->pagesByLinkName;
+
+					if(array_key_exists($chapterValue, $linkNames)) {
+						$nodeObj = $linkNames[$chapterValue];
+						$nodeObj->title = $chapter;
+						$nodeId = $nodeObj->nodeId;
+						$nodeObj->parentId = $parentId;
+
+						refreshPageNodeEx($nodeId, $parentId, $chapter, $chapter);
+						
+						$mkdoc->savePageByNodeId($nodeId, $nodeObj);
+						$mkdoc->savePageByLinkName($chapter, $nodeObj);
+
+					} else {
+						$nodeId = createPageNodeEx($bookNodeId, $parentId, $chapter, $chapter);	
+
+						$newObj = new stdClass();
+						$newObj->nodeId = $nodeId;
+						$newObj->parentId = $parentId1;
+						$newObj->title = $chapter;
+						$newObj->mdLink = $chapterValue;
+						
+						$mkdoc->savePageByNodeId($nodeId, $newObj);
+						$mkdoc->savePageByLinkName($chapter, $newObj);
+					}
+				}
+
+				//$saveObj->nodeId = $nodeId;
+				//$saveObj->title = $chapter;
+				//$saveObj->mdLink = $chapterValue;
+				//$mkdoc->savePageByNodeId($nodeId, $saveObj);
+				//$mkdoc->savePageByLinkName($chapterValue, $saveObj);
+					
+			} else {
+				
+				$attr = is_object($chapterValue) ? get_object_vars($chapterValue) : $chapterValue;
+
+				foreach($attr as $key => $val) {
+					var_dump($key.'------'.$val.'-------is md link:'.isMdLink($val));
+					
+					if(is_array($val)) {
+						$saveObj = new stdClass();
+						$saveObj->parentId = $parentId;
+						
+						if(array_key_exists($key, $mkdoc->pagesByLinkName)) {
+							
+							$linkNames = $mkdoc->pagesByLinkName;
+							$parentId = $linkNames[$key]->nodeId;
+							mkdoc_book_parseYaml($bookNodeId, $val, $parentId, $mkdoc);
+							
+						} else {
+							$parentId = createPageNodeEx($bookNodeId,$parentId, $key, $key);
+							$saveObj->nodeId = $parentId;
+							$saveObj->mdLink = $val;
+							$saveObj->title = $key;
+							$mkdoc->savePageByNodeId($parentId, $saveObj);
+							$mkdoc->savePageByLinkName($val, $saveObj);
+
+							mkdoc_book_parseYaml($bookNodeId, $val, $parentId, $mkdoc);	
+						}
+					} else {
+
+					
+						$saveObj = new stdClass();
+						$saveObj->parentId = $parentId;
+
+						if(isMdLink($val)) {
+							$folder = $GLOBALS["dataFolder"].$val;
+							//echo "*************md link********".$folder;
+							$linkNames = $mkdoc->pagesByLinkName;
+							var_dump('array_key_exists($linkNames, $val)==='.$val.'======='.array_key_exists($val, $linkNames));
+
+							if(array_key_exists($val, $linkNames)) {
+								$nodeId = $linkNames[$val]->nodeId;
+								$nodeObj = $linkNames[$val];
+								$nodeObj->parentId = $parentId;
+								$nodeObj->title = $key;
+								$nodeObj->mdLink = $val;
+
+								refreshPageNode($nodeId, $parentId, $key, $val, $folder);
+
+								$mkdoc->savePageByNodeId($nodeId, $nodeObj);
+								$mkdoc->savePageByLinkName($key, $nodeObj);
+									
+							} else {
+								$nodeId = createPageNode($bookNodeId, $parentId, $key, $val, $folder);	
+								
+								$newObj = new stdClass();
+								$newObj->nodeId = $nodeId;
+								$newObj->parentId = $parentId1;
+								$newObj->title = $key;
+								$newObj->mdLink = $val;
+								
+								$mkdoc->savePageByNodeId($nodeId, $newObj);
+								$mkdoc->savePageByLinkName($chapter, $newObj);
+							}
+
+						} else {
+
+							$linkNames = $mkdoc->pagesByLinkName;
+
+							if(array_key_exists($val, $linkNames)) {
+								$nodeId = $linkNames[$val]->nodeId;
+								refreshPageNodeEx($nodeId, $parentId, $key, $key);
+								
+								$nodeObj = $linkNames[$val];
+								$nodeObj->parentId = $parentId;
+								$nodeObj->title = $key;
+								$nodeObj->mdLink = $val;
+
+								$mkdoc->savePageByNodeId($nodeId, $nodeObj);
+								$mkdoc->savePageByLinkName($key, $nodeObj);
+									
+							} else {
+								$nodeId = createPageNodeEx($bookNodeId, $parentId, $key, $key);	
+								
+								$newObj = new stdClass();
+								$newObj->nodeId = $nodeId;
+								$newObj->parentId = $parentId1;
+								$newObj->title = $chapter;
+								$newObj->mdLink = $chapterValue;
+								
+								$mkdoc->savePageByNodeId($nodeId, $newObj);
+								$mkdoc->savePageByLinkName($chapter, $newObj);
+							}
+						}
+
+						//$saveObj->nodeId = $nodeId;
+						//$saveObj->title = $key;
+						//$saveObj->mdLink = $val;
+						//$mkdoc->savePageByNodeId($nodeId, $saveObj);
+						//$mkdoc->savePageByLinkName($val, $saveObj);
+					}
+				}
+			}
+
+
+		} else {
+			$saveObj = new stdClass();
+			$saveObj->parentId = $parentId;
+			
+			if(array_key_exists($chapter, $mkdoc->pagesByLinkName)) {
+				
+				$linkNames = $mkdoc->pagesByLinkName;
+				$parentId = $linkNames[$chapter]->nodeId;
+				mkdoc_book_parseYaml($bookNodeId, $chapterValue, $parentId, $mkdoc);
+				
+			} else {
+		
+				if(!is_int($chapter)) {//ignore the array numbers
+					$newNodeId = createPageNodeEx($bookNodeId,$parentId, $chapter, $chapter);
+					//dsm($newNodeId.'------'.$chapter);
+					$saveObj->nodeId = $newNodeId;
+					$saveObj->title = $chapter;
+					$mkdoc->savePageByNodeId($newNodeId, $saveObj);
+					
+					mkdoc_book_parseYaml($bookNodeId, $chapterValue, $newNodeId, $mkdoc);
+				} else {
+					mkdoc_book_parseYaml($bookNodeId, $chapterValue, $parentId, $mkdoc);
+				}
+			}
+
+			
+		}
+		
+
+			
+	}
+	
+}
+
+function mkdoc_book_parseYamlEx($bookNodeId, $obj, $parentId, &$mkdoc) {
+	//echo "=================";
+//var_dump($obj);
+
+	foreach($obj as $chapter => $chapterValue) {
+
+//var_dump($chapter);
+//		echo "***********";
+//		var_dump($chapterValue);
+
+var_dump( "----------------CHAPTER---".$chapter."----------------".is_array($chapterValue).'======'.$parentId);
+		if(!is_array($chapterValue)) {
+
+			if(is_string($chapterValue)) {
+				$saveObj = new stdClass();
+				$saveObj->parentId = $parentId;
+
+				if(isMdLink($chapterValue)) {
+					$folder = $GLOBALS["dataFolder"].$chapterValue;
+					//echo "*************md link********".$folder;
+					$linkNames = $mkdoc->pagesByLinkName;
+					var_dump('array_key_exists($linkNames, $val)==='.$chapterValue.'======='.array_key_exists($chapterValue, $linkNames));
+
+					if(array_key_exists($chapterValue, $linkNames)) {
+						$nodeId = $linkNames[$chapterValue]->nodeId;
+						$parentId1 = $linkNames[$chapterValue]->parentId;
+						if(strrpos($chapterValue, '/') == FALSE) {
+							$parentId1 = $bookNodeId;	
+						}
+					
+						var_dump('chapter='.$chapter.' value='.$chapterValue.' nodeId='.$nodeId.' parentId='.$parentId);
 						refreshPageNode($nodeId, $parentId1, $chapter, $chapterValue, $folder);	
 					} else {
 						if(strrpos($chapterValue, '/') == FALSE) {
@@ -783,7 +1027,7 @@ var_dump( "----------------CHAPTER---".$chapter."----------------".is_array($cha
 						} else {
 							$parentId1 = $parentId;	
 						}
-						$nodeId = createPageNode($bookNodeId, $parentId1, $chapter, $chapterValue, $folder);	
+						$nodeId = createPageNode($bookNodeId, $parentId1, $chapter, $chapterValue, $folder);
 					}
 
 				} else {
@@ -1018,7 +1262,7 @@ function parseObject($bookNodeId, $obj, $parentId) {
 					$folder = $GLOBALS["dataFolder"].$chapterValue;
 //						echo "*************md link********".$folder;
 					//var_dump('creating page '.$chapterValue.' under parent id: '.$parentId.'  folder is: '.$folder);
-					$nodeId = createPageNode($bookNodeId, $parentId, $key, $val, $folder);	
+					$nodeId = createPageNode($bookNodeId, $parentId, $chapter, $chapterValue, $folder);	
 
 				}
 			
@@ -1048,6 +1292,7 @@ function parseObject($bookNodeId, $obj, $parentId) {
 						$saveObj->parentId = $parentId;
 
 						if(isMdLink($val)) {
+							var_dump('md link is.......'.$val);
 							$folder = $GLOBALS["dataFolder"].$val;
 	//						echo "*************md link********".$folder;
 							

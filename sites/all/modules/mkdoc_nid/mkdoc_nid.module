@@ -334,7 +334,9 @@ function mkdoc_nid_getNodeId($mdName) {
 					//dsm($mdName);
 					//dsm($folder.'/'.$mdName);
 
-					return $linkNames[$folder.'/'.$mdName]->nodeId;
+					if(array_key_exists($folder.'/'.$mdName, $linkNames)) {
+						return $linkNames[$folder.'/'.$mdName]->nodeId;
+					}
 				} else {
 					return $linkNames[$mdName]->nodeId;	
 				}
