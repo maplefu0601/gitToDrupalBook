@@ -2,40 +2,42 @@
 
 
 /**
- * Implementation of hook_filter()
+ * mkdoc_nid_filter: to implementation of hook_filter
+ * author: Raymond Fu
+ * date; Feb 4, 2016
  */
 function mkdoc_nid_filter($op, $delta = 0, $format = -1, $text = '') {
-  ////dsm('******************mkdoc_filter*****');
-  ////dsm($op);
+  
+ 
   switch ($op) {
-  case 'list':
-    return array(0 => t('Mark doc to node id'));
+	  case 'list':
+		return array(0 => t('Mark doc to node id'));
 
-  case 'description':
-    return t('By including the syntax (*.md), this filter will embed the node with given NID');
+	  case 'description':
+		return t('By including the syntax (*.md), this filter will embed the node with given NID');
 
-  case 'prepare':
-    return $text;
+	  case 'prepare':
+		return $text;
 
-  case 'no cache':
-    return TRUE;
+	  case 'no cache':
+		return TRUE;
 
-  case "process":
+	  case "process":
 
-	//$viewNid = mkdoc_nid_getCurrentNodeId();
-	//$bookId = mkdoc_nid_getCurrentBookId($viewNid);
-	////dsm($text);
+		//$viewNid = mkdoc_nid_getCurrentNodeId();
+		//$bookId = mkdoc_nid_getCurrentBookId($viewNid);
+		////dsm($text);
 
-	return mkdoc_nid_convertion($text);
+		return mkdoc_nid_convertion($text);
 
-  }
+	  }
 }
 /*
 function mkdoc_nid_getNodeId($mdName) {
 
 	$mkdoc = MkDoc::getInstance();
 	$linkNames = $mkdoc->getLinkNames();
-	//////dsm($linkNames);
+
 
 }
 */
@@ -51,7 +53,7 @@ function mkdoc_nid_convertion($text) {
 	$text = mkdoc_nid_convertVideos($text);
 
 	$text = mkdoc_nid_convertDocuments($text);
-////dsm($text);
+
 	return $text;
 	
 }
@@ -60,7 +62,7 @@ function mkdoc_nid_convertion($text) {
 function mkdoc_nid_convertMdLinks($text) {
 	
     return preg_replace_callback('/\[(.*?)\]\((.*?)\)/', function($matches) {
-//dsm($matches);		
+
 		if(strpos($matches[2], '.md') == FALSE) {
 			return $matches[0];	
 		}
@@ -82,13 +84,13 @@ function mkdoc_nid_convertImages($text) {
 	
     return preg_replace_callback('/\[?\!\[(.*?)\]\((.*\.(png|jpg|jpeg|gif|tif|bmp))\)\]?.*[.* \"(.*)\"\)]?/', function($matches) {
 		
-//dsm($matches);
+
 		$linkFolder = mkdoc_nid_getNodeFolder($matches[2]);
 		$title = $matches[1];
 		if(array_key_exists(4, $matches)) {
 			$title = $matches[4];	
 		}
-//dsm($linkFolder);
+
 		if($linkFolder === NULL) {
 			$output = $matches[2];	
 		} else {
@@ -142,7 +144,7 @@ function mkdoc_nid_convertVideos($text) {
 function mkdoc_nid_convertDocuments($text) {
 	
     return preg_replace_callback('/\[(.*)\]\((.*?.(pdf|doc))\)/', function($matches) {
-		//dsm($matches);
+
 		$linkFolder = mkdoc_nid_getNodeFolder($matches[2]);
 
 		if($linkFolder === NULL) {
@@ -212,38 +214,37 @@ function mkdoc_nid_getNodeFolder($mediaName) {
 	$baseFolder = '/files/gdc-docs/gitdata/';
 	$retFolder = "";
 	$viewNid = mkdoc_nid_getCurrentNodeId(); 
-	//dsm('-------viewId---'.$viewNid);
+
 	if(is_numeric($viewNid)) {
 		$bookId = mkdoc_nid_getCurrentBookId($viewNid);
-		////dsm('-------bookid----'.$bookId);
+
 		if(is_numeric($bookId)) {
-			////dsm($bookId);
+
 			//$bookNode = node_load($bookId);
-			//////dsm($bookNode);
+
 
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
-			//dsm($datamk);
+
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 			$bookFolder = $datamk->bookFolder;
-			//dsm($linkNames);
+
 			$retFolder = $baseFolder.$bookFolder.'/docs/';
 
 			//$GLOBALS['mkdocLinkNames-'.$bookId] = $linkNames;
 			//$GLOBALS['mkdocNodeIds-'.$bookId] = $nodeIds;
 
-			////dsm($linkNames[$mdName]);
-			////dsm($linkNames[$mdName]->nodeId);
+
 
 			$pos = strrpos($mediaName, '/');
 			if($pos === false || $mediaName[0] !== '/') {//media file name only or is root folder
 
-				////dsm('=======no subfolder in md link=======');
+
 				$mdLink = $nodeIds[$viewNid]->mdLink;
-				////dsm($mdLink);
+
 				$folder = substr($mdLink, 0, strrpos($mdLink, '/'));
-				////dsm($folder);
+
 				if($folder != '') {
 
 					$retFolder .= $folder.'/'.$mediaName;
@@ -270,51 +271,49 @@ function mkdoc_nid_getNodeFolder($mediaName) {
 
 
 function mkdoc_nid_getNodeId($mdName) {
-//dsm('-------mkdoc_nid_getNodeId---'.$mdName);
+
 	$viewNid = mkdoc_nid_getCurrentNodeId(); 
-	////dsm('-------viewId---'.$viewNid);
+
 	if(is_numeric($viewNid)) {
 		$bookId = mkdoc_nid_getCurrentBookId($viewNid);
-		////dsm('-------bookid----'.$bookId);
+
 		if(is_numeric($bookId)) {
-			////dsm($bookId);
+
 			//$bookNode = node_load($bookId);
-			//////dsm($bookNode);
+
 
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
-			//dsm($datamk);
+
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
-			//dsm($linkNames);
+
 			$node = node_load($viewNid);
             if($node->book) {
                 $parentId = $nodeIds[$viewNid]->parentId;
-                //dsm('parent id='.$parentId);
+
                 $nodeParent = node_load($parentId);
-                //dsm($nodeParent?$nodeParent:'parent is null');
-                //dsm($parentId);
+
+
                 if($nodeParent) {
                     $node->book['plid'] = $nodeParent->book['mlid'];
                     _book_update_outline($node);
-                    //dsm($node);    
+
                 }   
             }   
 
 			//$GLOBALS['mkdocLinkNames-'.$bookId] = $linkNames;
 			//$GLOBALS['mkdocNodeIds-'.$bookId] = $nodeIds;
 
-			////dsm($linkNames[$mdName]);
-			////dsm($linkNames[$mdName]->nodeId);
 
 			$pos = strrpos($mdName, '/');
 			if($pos === false) {//md file name only
 
-				////dsm('=======no subfolder in md link=======');
+
 				$mdLink = $nodeIds[$viewNid]->mdLink;
-				////dsm($mdLink);
+
 				$folder = substr($mdLink, 0, strrpos($mdLink, '/'));
-				////dsm($folder);
+
 				if($folder != '') {
 
 					if(array_key_exists($folder.'/'.$mdName, $linkNames)) {
@@ -329,14 +328,11 @@ function mkdoc_nid_getNodeId($mdName) {
 			} else {
 					
 				$mdLink = $nodeIds[$viewNid]->mdLink;
-				////dsm($mdLink);
+
 				$folder = substr($mdLink, 0, strrpos($mdLink, '/'));
-				////dsm($folder);
+
 				if($folder != '') {
 
-					//dsm($linkNames);
-					//dsm($mdName);
-					//dsm($folder.'/'.$mdName);
 
 					if(array_key_exists($folder.'/'.$mdName, $linkNames)) {
 						return $linkNames[$folder.'/'.$mdName]->nodeId;
@@ -359,6 +355,6 @@ function mkdoc_nid_getNodeId($mdName) {
 
 
 function mkdoc_nid_preprocess_node() {
-	////dsm('mkdoc_nid_preprocess_node');	
+
 }
 
