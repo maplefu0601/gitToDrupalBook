@@ -283,7 +283,7 @@ function mkdoc_nid_getNodeId($mdName) {
 
 			$mkdoc = MkDoc::getInstance();
 			$datamk = $mkdoc->getMkdocsFromDb($bookId);
-			////dsm($datamk);
+			//dsm($datamk);
 			$linkNames = $datamk->pagesByLinkName;
 			$nodeIds = $datamk->pagesByNodeId;
 			//dsm($linkNames);

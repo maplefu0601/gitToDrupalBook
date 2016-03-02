@@ -216,14 +216,16 @@ function mkdoc_book_getBookOutline($bookId) {
 
 		$data = array();
 		$newMkdoc = array('pagesByNodeId' => array(), 'pagesByLinkName' => array());
-		$ret = mkdoc_book_fetchBookObject(0, $bookStru, $data, $datamk->pagesByNodeId, $bookFolder, $bookFolder, '', $newMkdoc, true, array());
-		//dsm($data);
-		//dsm($ret);
-		//dsm(json_encode($ret));
-
+		$chapterMap = array();
+		$ret = mkdoc_book_fetchBookObject(0, $bookStru, $data, $datamk->pagesByNodeId, $bookFolder, $bookFolder, '', $newMkdoc, true, $chapterMap);
+		
+		//dsm($chapterMap);
+		$ret = mkdoc_book_againFetchBookObject($ret, $chapterMap, $newMkdoc);
+//dsm($newMkdoc);
+//dsm($ret);
 		$datamk->pagesByNodeId = $newMkdoc['pagesByNodeId'];
 		$datamk->pagesByLinkName = $newMkdoc['pagesByLinkName'];
-		//dsm($datamk);
+
 		$bookFolder = $bookValue['bookfolder'];
 
 		$mkdoc->setMkdocsToDb($bookId, $datamk, $bookFolder, $gitRepoUrl);
@@ -291,7 +293,45 @@ function mkdoc_book_removeAllFiles($folder) {
 
 }
 
-function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeIds, $baseFolder, $bookFolder, $currentFolder, &$newDoc, $sameChapter, $chapterMap) {
+//just in case some chapter names are not changed for the first time
+function mkdoc_book_againFetchBookObject(&$dataRet, $chapterMap, &$mkdoc) {
+//dsm($dataRet);	
+	foreach($dataRet as $name => $value) {
+		
+		if(is_array($value)) {
+			$dataRet[$name] = mkdoc_book_againFetchBookObject($value, $chapterMap, $mkdoc);	
+		} else {
+			if(isMdLink($value)) {
+				if(strpos($value, '/')) {
+					$chapterFromMdLink = substr($value, 0, strpos($value, '/'));
+					if(array_key_exists($chapterFromMdLink, $chapterMap)) {
+						$oldLink = $value;
+						//dsm($value);
+						//dsm($mkdoc);
+						//dsm($mkdoc['pagesByLinkName']);
+						$oldLinkNameObj = $mkdoc['pagesByLinkName'][$oldLink];
+						$oldNodeObj = $mkdoc['pagesByNodeId'][$oldLinkNameObj->nodeId];
+						$newLink = $chapterMap[$chapterFromMdLink].substr($value, strpos($value, '/'));
+						$dataRet[$name] = $newLink;
+						//dsm($dataRet);
+						//dsm($name.'----------'.$oldLink.'-----------'.$newLink);
+
+						$oldLinkNameObj->mdLink = $newLink;
+						$oldNodeObj->mdLink = $newLink;
+						unset($mkdoc['pagesByLinkName'][$oldLink]);
+						//unset($mkdoc['pagesByNodeId'][$oldLinkNameObj->nodeId]);
+
+						$mkdoc['pagesByLinkName'][$newLink] = $oldLinkNameObj;
+						$mkdoc['pagesByNodeId'][$oldLinkNameObj->nodeId] = $oldLinkNameObj;
+					}
+				}
+			}
+		}
+	}
+	return $dataRet;
+}
+
+function mkdoc_book_fetchBookObject($parentId, $bookStructure, &$dataRet, $nodeIds, $baseFolder, $bookFolder, $currentFolder, &$newDoc, $sameChapter, &$chapterMap) {
 //dsm($bookStructure);
 //dsm($nodeIds);
 //dsm('book folder----'.$bookFolder);
